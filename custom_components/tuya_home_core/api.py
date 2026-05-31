@@ -36,6 +36,14 @@ class TuyaHomeAPI:
 
     # ── Validation ────────────────────────────────────────────────────────────
 
+    def get_uid(self) -> str:
+        """Return the Tuya account UID — needed for MQTT subscriptions."""
+        try:
+            devices = self.get_devices()
+            return next((d.get("uid", "") for d in devices if d.get("uid")), "")
+        except Exception:
+            return ""
+
     def test_credentials(self) -> bool:
         """Return True if credentials are valid (makes one lightweight API call)."""
         try:

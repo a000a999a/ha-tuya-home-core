@@ -1,31 +1,59 @@
-"""Config flow for Tuya Home Core."""
+"""Config flow + options flow + re-auth flow for Tuya Home Core."""
 
 from __future__ import annotations
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import selector
 
 from .api import TuyaHomeAPI
 from .const import (
     CONF_API_KEY,
     CONF_API_SECRET,
     CONF_REGION,
+    CONF_UID,
     DEFAULT_REGION,
     DOMAIN,
     REGIONS,
 )
 
 
-def _validate(hass: HomeAssistant, data: dict) -> dict | None:
-    """Return None on success, or an errors dict on failure."""
+def _build_schema(defaults: dict | None = None) -> vol.Schema:
+    d = defaults or {}
+    return vol.Schema({
+        vol.Required(CONF_API_KEY,    default=d.get(CONF_API_KEY, "")): str,
+        vol.Required(CONF_API_SECRET, default=d.get(CONF_API_SECRET, "")):
+            selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)),
+        vol.Required(CONF_REGION,     default=d.get(CONF_REGION, DEFAULT_REGION)):
+            vol.In(REGIONS),
+        vol.Optional(CONF_UID,        default=d.get(CONF_UID, "")):
+            selector.TextSelector(selector.TextSelectorConfig(
+                type=selector.TextSelectorType.TEXT
+            )),
+    })
+
+
+def _validate_and_fetch_uid(data: dict) -> tuple[bool, str]:
+    """
+    Validate credentials with a live API call.
+    Returns (is_valid, uid).
+    Auto-detects UID if not provided by user.
+    """
     api = TuyaHomeAPI(data[CONF_API_KEY], data[CONF_API_SECRET], data[CONF_REGION])
-    ok  = api.test_credentials()
-    return None if ok else {"base": "invalid_auth"}
+    if not api.test_credentials():
+        return False, ""
+    uid = data.get(CONF_UID, "").strip() or api.get_uid()
+    return True, uid
 
 
 class TuyaHomeCoreConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Single-step config flow: enter API key, secret, region."""
+    """Single-step setup: API key, secret, region, optional UID."""
 
     VERSION = 1
 
@@ -38,23 +66,88 @@ class TuyaHomeCoreConfigFlow(ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(user_input[CONF_API_KEY])
             self._abort_if_unique_id_configured()
 
-            errors_or_none = await self.hass.async_add_executor_job(
-                _validate, self.hass, user_input
+            valid, uid = await self.hass.async_add_executor_job(
+                _validate_and_fetch_uid, user_input
             )
-            if errors_or_none is None:
+            if not valid:
+                errors["base"] = "invalid_auth"
+            else:
+                data = {**user_input, CONF_UID: uid}
                 return self.async_create_entry(
                     title=f"Tuya ({user_input[CONF_REGION].upper()})",
-                    data=user_input,
+                    data=data,
                 )
-            errors = errors_or_none
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_API_KEY): str,
-                vol.Required(CONF_API_SECRET): str,
-                vol.Required(CONF_REGION, default=DEFAULT_REGION): vol.In(REGIONS),
-            }
-        )
         return self.async_show_form(
-            step_id="user", data_schema=schema, errors=errors
+            step_id="user",
+            data_schema=_build_schema(user_input),
+            errors=errors,
+        )
+
+    async def async_step_reauth(
+        self, entry_data: dict
+    ) -> ConfigFlowResult:
+        """Triggered automatically when API returns auth failure."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        reauth_entry = self._get_reauth_entry()
+
+        if user_input is not None:
+            valid, uid = await self.hass.async_add_executor_job(
+                _validate_and_fetch_uid, user_input
+            )
+            if not valid:
+                errors["base"] = "invalid_auth"
+            else:
+                data = {**user_input, CONF_UID: uid}
+                self.hass.config_entries.async_update_entry(reauth_entry, data=data)
+                await self.hass.config_entries.async_reload(reauth_entry.entry_id)
+                return self.async_abort(reason="reauth_successful")
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=_build_schema(reauth_entry.data),
+            errors=errors,
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return TuyaHomeCoreOptionsFlow(config_entry)
+
+
+class TuyaHomeCoreOptionsFlow(OptionsFlow):
+    """Options flow: update API credentials or UID without re-adding."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        self._entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            valid, uid = await self.hass.async_add_executor_job(
+                _validate_and_fetch_uid, user_input
+            )
+            if not valid:
+                errors["base"] = "invalid_auth"
+            else:
+                new_data = {**user_input, CONF_UID: uid}
+                self.hass.config_entries.async_update_entry(self._entry, data=new_data)
+                return self.async_create_entry(data={})
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=_build_schema(self._entry.data),
+            errors=errors,
+            description_placeholders={
+                "current_region": self._entry.data.get(CONF_REGION, "").upper(),
+                "current_uid":    self._entry.data.get(CONF_UID, "(auto-detected)"),
+            },
         )

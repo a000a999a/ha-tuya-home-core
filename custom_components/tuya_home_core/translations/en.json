@@ -7,7 +7,18 @@
         "data": {
           "api_key":    "API Key (Access ID)",
           "api_secret": "API Secret (Access Secret)",
-          "region":     "Data centre region"
+          "region":     "Data centre region",
+          "uid":        "Tuya User ID (leave blank to auto-detect)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Tuya Home Core",
+        "description": "Your Tuya credentials are no longer valid. Enter new credentials to re-authenticate.",
+        "data": {
+          "api_key":    "API Key (Access ID)",
+          "api_secret": "API Secret (Access Secret)",
+          "region":     "Data centre region",
+          "uid":        "Tuya User ID (leave blank to auto-detect)"
         }
       }
     },
@@ -15,7 +26,25 @@
       "invalid_auth": "Invalid API key or secret — check your Tuya IoT Platform credentials."
     },
     "abort": {
-      "already_configured": "This Tuya account is already configured."
+      "already_configured": "This Tuya account is already configured.",
+      "reauth_successful":  "Re-authentication successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Tuya Credentials",
+        "description": "Current region: {current_region}. Current UID: {current_uid}. Re-enter credentials to update them. Leave UID blank to re-detect automatically.",
+        "data": {
+          "api_key":    "API Key (Access ID)",
+          "api_secret": "API Secret (Access Secret)",
+          "region":     "Data centre region",
+          "uid":        "Tuya User ID (leave blank to auto-detect)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key or secret — check your Tuya IoT Platform credentials."
     }
   }
 }

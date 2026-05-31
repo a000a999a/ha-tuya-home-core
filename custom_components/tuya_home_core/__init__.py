@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .api import TuyaHomeAPI
-from .const import CONF_API_KEY, CONF_API_SECRET, CONF_REGION, DOMAIN
+from .const import CONF_API_KEY, CONF_API_SECRET, CONF_REGION, CONF_UID, DOMAIN
 from .coordinator import TuyaHomeCoreCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,6 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "coordinator": coordinator,
         "api":         api,
+        "uid":         entry.data.get(CONF_UID, ""),
     }
 
     _LOGGER.info(
