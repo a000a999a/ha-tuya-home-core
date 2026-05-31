@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Tuya Cloud",
+        "description": "Enter your Tuya IoT Platform credentials. Get them at https://iot.tuya.com",
+        "data": {
+          "api_key":    "API Key (Access ID)",
+          "api_secret": "API Secret (Access Secret)",
+          "region":     "Data centre region"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key or secret — check your Tuya IoT Platform credentials."
+    },
+    "abort": {
+      "already_configured": "This Tuya account is already configured."
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "domain": "tuya_home_core",
+  "name": "Tuya Home Core",
+  "version": "0.1.0",
+  "documentation": "https://github.com/a000a999a/ha-tuya-home-core",
+  "issue_tracker": "https://github.com/a000a999a/ha-tuya-home-core/issues",
+  "requirements": ["tinytuya>=1.15.0"],
+  "dependencies": [],
+  "codeowners": ["@a000a999a"],
+  "iot_class": "cloud_polling",
+  "config_flow": true
+}
