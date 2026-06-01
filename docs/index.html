@@ -348,6 +348,7 @@
     <div class="nav-group">Reference</div>
     <a href="#entities"       class="nav-link">Entities</a>
     <a href="#options"        class="nav-link">Options &amp; Settings</a>
+    <a href="#tuya-platform"   class="nav-link">Tuya Platform Setup</a>
     <a href="#technical"      class="nav-link">Technical Reference</a>
     <a href="#quota"          class="nav-link">API Quota</a>
     <a href="#coexistence"    class="nav-link">Official Tuya Integration</a>
@@ -861,54 +862,203 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
   </section>
 
   <!-- ══════════════ TECHNICAL ══════════════ -->
+  <!-- ══════════════ TUYA PLATFORM SETUP ══════════════ -->
+  <section id="tuya-platform">
+    <h2>Tuya Developer Platform Setup</h2>
+    <p>The following documents the exact configuration required in the <a href="https://iot.tuya.com" target="_blank" style="color:var(--accent)">Tuya IoT Platform</a> for this suite to function.</p>
+
+    <h3>Project configuration sequence</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Create a Cloud Development project</h4>
+          <p>Industry: <em>Smart Home</em>. Data center: choose the region matching your SmartLife account (e.g. Central Europe).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Link your app account</h4>
+          <p>Under <em>Devices → Link App Account</em>, link your SmartLife account via <strong>Automatic Link → Platform Authorization</strong>. Copy the UID shown — you will need it for the Tuya Home Core config and for MQTT.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Authorize the required Service APIs</h4>
+          <p>Under <em>Service API</em>, subscribe and authorize the services listed below. The suite actively uses <strong>IoT Core</strong>, <strong>Smart Home Basic Service</strong>, and <strong>Device Status Notification</strong>. The others provide supporting functionality.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Configure the Message Service</h4>
+          <p>Under <em>Message Service → Messaging Rules</em>, add a rule for the Production Environment. Select the BizCode message types listed below. Service type: <strong>Message Queue</strong>. Encryption: <strong>AES-GCM</strong> (recommended — see encryption note below).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Copy credentials to Home Assistant</h4>
+          <p>From the project Overview page, copy the <strong>Access ID</strong> and <strong>Access Secret</strong>. Enter them in <em>Tuya Home Core → Configure</em>. The UID goes in the same form.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Authorized Service APIs (18)</h3>
+    <p>These are the APIs subscribed to in the project. APIs marked <em>deprecated</em> are legacy services that may still be used by linked SmartLife devices.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Service API</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>IoT Core</strong></td><td>Device list, device properties, SD card status — primary API for this suite</td></tr>
+          <tr><td>2</td><td><strong>Authorization Token Management</strong></td><td>API authentication token refresh</td></tr>
+          <tr><td>3</td><td><strong>Smart Home Basic Service</strong></td><td>MQTT credentials endpoint (<code>/v1.0/open-hub/access/config</code>) for motion alerts</td></tr>
+          <tr><td>4</td><td><strong>Device Status Notification</strong></td><td>Enables the message queue push for device state changes</td></tr>
+          <tr><td>5</td><td>Device Maintenance</td><td>Device health and firmware info</td></tr>
+          <tr><td>6</td><td>Beta APIs</td><td>Access to pre-release Tuya API endpoints</td></tr>
+          <tr><td>7</td><td>Smart Home Content Manage</td><td>Home/room/scene management</td></tr>
+          <tr><td>8</td><td>Gateway Opening Service</td><td>Zigbee gateway sub-device management</td></tr>
+          <tr><td>9</td><td>Smart Water Meter Service</td><td>Water meter device type support</td></tr>
+          <tr><td>10</td><td>Product Firmware Management</td><td>OTA firmware version queries</td></tr>
+          <tr><td>11</td><td>Device Pool Management</td><td>Device grouping and pool operations</td></tr>
+          <tr><td>12</td><td>Product Management Service</td><td>Product category and DPS schema lookup</td></tr>
+          <tr><td>13</td><td>Industry Basic Service</td><td>Industry-specific device data access</td></tr>
+          <tr><td>14</td><td>Device Location Service</td><td>GPS/location data for devices</td></tr>
+          <tr><td>15</td><td><em>[Deprecated]</em> Smart Home Scene Linkage</td><td>Legacy scene automation (replaced by new scene API)</td></tr>
+          <tr><td>16</td><td><em>[Deprecated]</em> Device OTA Update</td><td>Legacy OTA trigger API</td></tr>
+          <tr><td>17</td><td><em>[Deprecated]</em> Device Log Query</td><td>Legacy device event log API</td></tr>
+          <tr><td>18</td><td>Data Dashboard Service</td><td>Analytics and usage dashboard</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>BizCode (Message Type) subscriptions</h3>
+    <p>These message types are subscribed to in the Production Environment messaging rule. All device state changes relevant to cameras and watering valves flow through these codes.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>BizCode</th><th>Description</th><th>Relevant for</th></tr></thead>
+        <tbody>
+          <tr><td><code>devicePropertyMessage</code></td><td>Device Property Message — DPS value updates (motion, SD status, valve state)</td><td>Motion alerts, SD monitoring, valve state</td></tr>
+          <tr><td><code>deviceEventMessage</code></td><td>Device Event Message — doorbell presses, alarm triggers</td><td>Doorbell cameras</td></tr>
+          <tr><td><code>deviceActionResponseMessage</code></td><td>Response to a command sent to a device (e.g. SD format confirmation)</td><td>Format SD card confirmation</td></tr>
+          <tr><td><code>deviceOnline</code></td><td>Device came online</td><td>Camera online/offline tracking</td></tr>
+          <tr><td><code>deviceOffline</code></td><td>Device went offline</td><td>Camera offline alerts (tech recipients)</td></tr>
+          <tr><td><code>deviceTransfer</code></td><td>Device transferred to a different home or account</td><td>Fleet management</td></tr>
+          <tr><td><code>nameUpdate</code></td><td>Device name was changed in SmartLife</td><td>Coordinator refresh sync</td></tr>
+          <tr><td><code>statusReport</code></td><td>Periodic device status heartbeat</td><td>Online status confirmation</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <p>The Trial Edition quota (30,000 API calls / month, 140,000 message subscriptions / month, 50 devices) is sufficient for this suite at default settings. See <a href="#quota" style="color:var(--accent)">API Quota</a> for the breakdown.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ TECHNICAL ══════════════ -->
   <section id="technical">
     <h2>Technical Reference</h2>
 
-    <details>
-      <summary>MQTT bridge — connection and decryption</summary>
+    <details open>
+      <summary>MQTT bridge — connection, encryption &amp; decryption</summary>
       <div class="details-body">
-        <p>The <code>TuyaMQTTBridge</code> uses <strong>paho-mqtt</strong> over TLS to subscribe to Tuya's EU message queue. Credentials are fetched once at startup and refreshed automatically before expiry.</p>
+        <p>The <code>TuyaMQTTBridge</code> uses <strong>paho-mqtt</strong> over TLS to subscribe to Tuya's EU message queue. Credentials are fetched once at startup via the Tuya Cloud REST API and refreshed automatically 10 minutes before expiry (TTL: 7200 s).</p>
 
         <h4>MQTT credentials endpoint</h4>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">HTTP</span></div>
+          <div class="code-header"><span class="code-lang">HTTP POST</span></div>
           <pre>POST /v1.0/open-hub/access/config
 Body: {
   <span class="tok-str">"uid"</span>:       <span class="tok-redact">"&lt;YOUR_TUYA_UID&gt;"</span>,
   <span class="tok-str">"link_id"</span>:   <span class="tok-redact">"&lt;YOUR_ACCESS_ID&gt;"</span>,
   <span class="tok-str">"link_type"</span>: <span class="tok-str">"mqtt"</span>,
   <span class="tok-str">"topics"</span>:    <span class="tok-str">"device"</span>
-}</pre>
+}
+
+Response fields:
+  client_id     — unique MQTT client identifier for this session
+  username      — MQTT username
+  password      — MQTT password (32-char hex; key derived from chars 8–23)
+  url           — ssl://m1.tuyaeu.com:8883
+  source_topic  — { "device": "cloud/token/in/{session_id}" }
+  expire_time   — 7200 seconds</pre>
         </div>
 
-        <h4>Broker</h4>
-        <div class="code-block">
-          <div class="code-header"><span class="code-lang">Config</span></div>
-          <pre>url:      ssl://m1.tuyaeu.com:8883
-topic:    cloud/token/in/{session_id}
-expiry:   7200 seconds  →  reconnect at T-10 min</pre>
+        <h4>AES-GCM (platform UI) vs AES-ECB (MQTT wire) — important distinction</h4>
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div class="callout-body">
+            <p>The Tuya Developer Platform UI shows an <strong>AES-GCM</strong> encryption setting under Message Service. This setting applies to the <em>Apache Pulsar</em> message queue delivery SDK — a separate delivery mechanism. It does <strong>not</strong> affect the MQTT broker at <code>m1.tuyaeu.com:8883</code>.</p>
+            <p>MQTT messages from Tuya are always encrypted with <strong>AES-128-ECB</strong>, key = <code>password[8:24]</code> (16 bytes), regardless of the platform UI setting. This is confirmed by Tuya's official SDKs (tinytuya, tuya-connector-python) and by the MQTT credentials API response which contains no encryption-type field.</p>
+          </div>
         </div>
 
         <h4>Message decryption</h4>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python</span></div>
+          <div class="code-header"><span class="code-lang">Python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre><span class="tok-kw">from</span> cryptography.hazmat.primitives.ciphers <span class="tok-kw">import</span> Cipher, algorithms, modes
-<span class="tok-comment"># Key = bytes 8–23 of the MQTT session password (changes every session)</span>
-key  = mqtt_password[<span class="tok-num">8</span>:<span class="tok-num">24</span>].encode()
-<span class="tok-comment"># Cipher: AES-128-ECB with PKCS7 padding</span>
-cipher = Cipher(algorithms.AES(key), modes.ECB())</pre>
+<span class="tok-kw">import</span> base64, json
+
+<span class="tok-comment"># Key = chars 8–23 of the MQTT session password (16 bytes, session-specific)</span>
+key = mqtt_password[<span class="tok-num">8</span>:<span class="tok-num">24</span>].encode()
+
+<span class="tok-comment"># Payload arrives as JSON envelope; data field is base64-encoded ciphertext</span>
+envelope  = json.loads(raw_payload)
+raw_data  = envelope.get(<span class="tok-str">"data"</span>)          <span class="tok-comment"># str (base64) or dict (already plain)</span>
+
+<span class="tok-kw">if</span> isinstance(raw_data, str):
+    raw    = base64.b64decode(raw_data)
+    n      = len(raw) - (len(raw) % <span class="tok-num">16</span>)  <span class="tok-comment"># align to AES block size</span>
+    c      = Cipher(algorithms.AES(key), modes.ECB())
+    plain  = c.decryptor().update(raw[:n])
+    pad    = plain[-<span class="tok-num">1</span>]                   <span class="tok-comment"># PKCS7 unpad</span>
+    plain  = plain[:-pad] <span class="tok-kw">if</span> <span class="tok-num">1</span> &lt;= pad &lt;= <span class="tok-num">16</span> <span class="tok-kw">else</span> plain
+    msg    = json.loads(plain)
+<span class="tok-kw">else</span>:
+    msg    = raw_data                     <span class="tok-comment"># already decrypted by broker (rare)</span></pre>
+        </div>
+
+        <h4>Decrypted message structure</h4>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">JSON</span></div>
+          <pre>{
+  <span class="tok-key">"devId"</span>:  <span class="tok-str">"device-id"</span>,
+  <span class="tok-key">"status"</span>: [
+    {
+      <span class="tok-key">"code"</span>:  <span class="tok-str">"movement_detect_pic"</span>,    <span class="tok-comment">// or "initiative_message"</span>
+      <span class="tok-key">"t"</span>:     <span class="tok-num">1780300000</span>,               <span class="tok-comment">// Unix timestamp (seconds)</span>
+      <span class="tok-key">"value"</span>: <span class="tok-str">"{ raw JSON or base64 }"</span>
+    }
+  ]
+}</pre>
         </div>
 
         <h4>Motion DPS codes</h4>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Code</th><th>Value encoding</th><th>Meaning</th></tr></thead>
+            <thead><tr><th>Code</th><th>Value encoding</th><th>Contains</th></tr></thead>
             <tbody>
-              <tr><td><code>movement_detect_pic</code></td><td>Raw JSON string</td><td>Motion with image (bucket + path)</td></tr>
-              <tr><td><code>initiative_message</code></td><td>Base64 → JSON</td><td>Motion event (camera model dependent)</td></tr>
+              <tr>
+                <td><code>movement_detect_pic</code></td>
+                <td>Raw JSON string</td>
+                <td><code>bucket</code>, <code>files</code> (path + decrypt key for OSS image)</td>
+              </tr>
+              <tr>
+                <td><code>initiative_message</code></td>
+                <td>Base64 → JSON</td>
+                <td><code>cmd: "ipc_motion"</code>, <code>bucket</code>, <code>files</code></td>
+              </tr>
             </tbody>
           </table>
         </div>
+
+        <h4>BizCode filtering in the bridge</h4>
+        <p>The bridge subscribes to <strong>all</strong> messages on the device topic and filters client-side. Only status arrays containing <code>movement_detect_pic</code> or <code>initiative_message</code> DPS codes trigger an email. Other BizCodes (<code>deviceOnline</code>, <code>nameUpdate</code>, etc.) are received but silently ignored at present — they can be used in future to drive additional HA events.</p>
       </div>
     </details>
 
@@ -938,11 +1088,11 @@ cipher = Cipher(algorithms.AES(key), modes.ECB())</pre>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python</span></div>
           <pre>sub = tinytuya.OutletDevice(
-    dev_id  = device_id,
-    address = gateway_ip,
-    local_key = gateway_key,
-    version = <span class="tok-str">"3.4"</span>,
-    cid     = sub_cid,
+    dev_id     = device_id,
+    address    = gateway_ip,
+    local_key  = gateway_key,
+    version    = <span class="tok-str">"3.4"</span>,
+    cid        = sub_cid,
     gateway_id = gateway_id,
 )
 sub.set_socketTimeout(<span class="tok-num">8</span>)      <span class="tok-comment"># REQUIRED — prevents event loop hang</span>
