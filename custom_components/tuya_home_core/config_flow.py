@@ -16,8 +16,10 @@ from .api import TuyaHomeAPI
 from .const import (
     CONF_API_KEY,
     CONF_API_SECRET,
+    CONF_REFRESH_DAYS,
     CONF_REGION,
     CONF_UID,
+    DEFAULT_REFRESH_DAYS,
     DEFAULT_REGION,
     DOMAIN,
     REGIONS,
@@ -140,11 +142,26 @@ class TuyaHomeCoreOptionsFlow(OptionsFlow):
             else:
                 new_data = {**user_input, CONF_UID: uid}
                 self.hass.config_entries.async_update_entry(self._entry, data=new_data)
-                return self.async_create_entry(data={})
+                return self.async_create_entry(
+                    data={CONF_REFRESH_DAYS: int(user_input[CONF_REFRESH_DAYS])}
+                )
+
+        current_refresh = self._entry.options.get(CONF_REFRESH_DAYS, DEFAULT_REFRESH_DAYS)
+        defaults = {**self._entry.data, CONF_REFRESH_DAYS: current_refresh}
+
+        schema = vol.Schema({
+            **_build_schema(self._entry.data).schema,
+            vol.Optional(CONF_REFRESH_DAYS, default=current_refresh):
+                selector.NumberSelector(selector.NumberSelectorConfig(
+                    min=1, max=30, step=1,
+                    mode=selector.NumberSelectorMode.SLIDER,
+                    unit_of_measurement="days",
+                )),
+        })
 
         return self.async_show_form(
             step_id="init",
-            data_schema=_build_schema(self._entry.data),
+            data_schema=schema,
             errors=errors,
             description_placeholders={
                 "current_region": self._entry.data.get(CONF_REGION, "").upper(),

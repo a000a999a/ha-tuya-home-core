@@ -7,8 +7,8 @@ CONF_API_SECRET = "api_secret"
 CONF_REGION     = "region"
 CONF_UID        = "uid"          # Tuya account user ID (for MQTT, auto-detected but editable)
 
+CONF_REFRESH_DAYS    = "refresh_days"
+DEFAULT_REFRESH_DAYS = 14
+
 REGIONS = ["eu", "us", "cn", "in"]
 DEFAULT_REGION = "eu"
-
-# How often to refresh the device/area list from Tuya Cloud
-COORDINATOR_UPDATE_INTERVAL_MINUTES = 60

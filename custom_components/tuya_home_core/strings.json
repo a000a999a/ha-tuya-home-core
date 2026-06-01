@@ -36,10 +36,11 @@
         "title": "Update Tuya Credentials",
         "description": "Current region: {current_region}. Current UID: {current_uid}. Re-enter credentials to update them. Leave UID blank to re-detect automatically.",
         "data": {
-          "api_key":    "API Key (Access ID)",
-          "api_secret": "API Secret (Access Secret)",
-          "region":     "Data centre region",
-          "uid":        "Tuya User ID (leave blank to auto-detect)"
+          "api_key":      "API Key (Access ID)",
+          "api_secret":   "API Secret (Access Secret)",
+          "region":       "Data centre region",
+          "uid":          "Tuya User ID (leave blank to auto-detect)",
+          "refresh_days": "Auto-refresh interval (days)"
         }
       }
     },

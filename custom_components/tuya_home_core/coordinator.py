@@ -10,14 +10,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import TuyaHomeAPI
-from .const import COORDINATOR_UPDATE_INTERVAL_MINUTES, DOMAIN
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class TuyaHomeCoreCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """
-    Fetches and caches Tuya device list and area map once per hour.
+    Fetches and caches Tuya device list and area map.
+
+    Refresh interval is user-configurable (default 14 days).
+    Manual refresh available via the Refresh Devices button entity.
 
     data layout:
       {
@@ -29,13 +32,13 @@ class TuyaHomeCoreCoordinator(DataUpdateCoordinator[dict[str, Any]]):
       hass.data[DOMAIN][entry_id]["coordinator"]
     """
 
-    def __init__(self, hass: HomeAssistant, api: TuyaHomeAPI) -> None:
+    def __init__(self, hass: HomeAssistant, api: TuyaHomeAPI, refresh_days: int) -> None:
         self.api = api
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(minutes=COORDINATOR_UPDATE_INTERVAL_MINUTES),
+            update_interval=timedelta(days=refresh_days),
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
