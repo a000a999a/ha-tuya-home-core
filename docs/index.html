@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tuya HA Suite — Documentation</title>
+<style>
+  :root[data-theme="dark"] {
+    --bg:        #0f1117;
+    --bg2:       #1a1d27;
+    --bg3:       #22263a;
+    --border:    #2e3352;
+    --text:      #c9d1e8;
+    --text-dim:  #6b7499;
+    --accent:    #5c8fff;
+    --accent2:   #38d9a9;
+    --accent3:   #ff8c5a;
+    --warn:      #f7c948;
+    --danger:    #ff5e5e;
+    --code-bg:   #12151f;
+    --tag-core:  #1a3a6b;
+    --tag-water: #0f3d2a;
+    --tag-cam:   #3d1a0f;
+    --tag-core-t:#5c8fff;
+    --tag-water-t:#38d9a9;
+    --tag-cam-t: #ff8c5a;
+    --shadow:    0 4px 24px rgba(0,0,0,0.5);
+  }
+  :root[data-theme="light"] {
+    --bg:        #f4f6fb;
+    --bg2:       #ffffff;
+    --bg3:       #eaedfa;
+    --border:    #d0d6ee;
+    --text:      #1a1d2e;
+    --text-dim:  #6b7499;
+    --accent:    #2563eb;
+    --accent2:   #059669;
+    --accent3:   #ea580c;
+    --warn:      #d97706;
+    --danger:    #dc2626;
+    --code-bg:   #1e2133;
+    --tag-core:  #dbeafe;
+    --tag-water: #d1fae5;
+    --tag-cam:   #ffedd5;
+    --tag-core-t:#2563eb;
+    --tag-water-t:#059669;
+    --tag-cam-t: #ea580c;
+    --shadow:    0 4px 24px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  nav {
+    width: 260px;
+    min-width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .nav-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo h1 { font-size: 1.05rem; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; }
+  .nav-logo p  { font-size: 0.72rem; color: var(--text-dim); margin-top: 3px; }
+  .nav-links { padding: 12px 0; flex: 1; }
+  .nav-group { padding: 10px 20px 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); }
+  .nav-links a {
+    display: block;
+    padding: 6px 20px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); background: var(--bg3); }
+  .nav-links a.active { color: var(--accent); border-left-color: var(--accent); background: var(--bg3); }
+  .nav-bottom {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .theme-toggle {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex: 1;
+    transition: background 0.15s;
+  }
+  .theme-toggle:hover { background: var(--border); }
+
+  /* ── Main ── */
+  main {
+    flex: 1;
+    padding: 48px 56px;
+    max-width: 960px;
+  }
+
+  section { margin-bottom: 72px; scroll-margin-top: 24px; }
+  h2 { font-size: 1.6rem; font-weight: 700; color: var(--text); margin-bottom: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); margin: 28px 0 10px; }
+  h4 { font-size: 0.9rem; font-weight: 600; color: var(--text-dim); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  p  { margin-bottom: 14px; color: var(--text); font-size: 0.92rem; }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px 40px;
+    margin-bottom: 40px;
+  }
+  .hero h2 { border: none; padding: 0; margin: 0 0 10px; font-size: 2rem; }
+  .hero p  { color: var(--text-dim); font-size: 0.95rem; max-width: 560px; margin: 0; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .badge {
+    font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 100px;
+    letter-spacing: 0.04em;
+  }
+  .badge-blue   { background: var(--tag-core);  color: var(--tag-core-t);  border: 1px solid var(--tag-core-t); }
+  .badge-green  { background: var(--tag-water); color: var(--tag-water-t); border: 1px solid var(--tag-water-t); }
+  .badge-orange { background: var(--tag-cam);   color: var(--tag-cam-t);   border: 1px solid var(--tag-cam-t); }
+  .badge-gray   { background: var(--bg3); color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* ── Integration cards ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .card:hover { box-shadow: var(--shadow); }
+  .card.core   { border-top: 3px solid var(--accent); }
+  .card.water  { border-top: 3px solid var(--accent2); }
+  .card.camera { border-top: 3px solid var(--accent3); }
+  .card-icon { font-size: 1.6rem; margin-bottom: 10px; }
+  .card h3 { margin: 0 0 6px; font-size: 0.95rem; }
+  .card p  { font-size: 0.82rem; color: var(--text-dim); margin: 0 0 12px; }
+  .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ── Architecture diagram ── */
+  .arch {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 32px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .arch .hl-blue   { color: var(--accent); }
+  .arch .hl-green  { color: var(--accent2); }
+  .arch .hl-orange { color: var(--accent3); }
+  .arch .hl-gray   { color: var(--text-dim); }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; }
+  .step {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 24px;
+    align-items: flex-start;
+  }
+  .step-num {
+    counter-increment: step;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .step-num::before { content: counter(step); }
+  .step-body h4 { margin: 0 0 5px; font-size: 0.88rem; text-transform: none; letter-spacing: 0; color: var(--text); }
+  .step-body p  { margin: 0; font-size: 0.85rem; color: var(--text-dim); }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 12px 0 20px;
+    overflow: hidden;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-lang { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); }
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: var(--border); color: var(--text); }
+  .copy-btn.copied { color: var(--accent2); border-color: var(--accent2); }
+  pre {
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: #c9d1e8;
+  }
+  .tok-key    { color: #7eb8f7; }
+  .tok-str    { color: #98d982; }
+  .tok-redact { color: var(--accent3); font-style: italic; }
+  .tok-comment{ color: #4d5b8a; }
+  .tok-kw     { color: #c792ea; }
+  .tok-num    { color: #f78c6c; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 12px 0 24px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  th { background: var(--bg3); color: var(--text-dim); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg3); }
+  code { font-family: "SF Mono", "Fira Code", monospace; font-size: 0.82em; background: var(--bg3); padding: 1px 5px; border-radius: 3px; }
+
+  /* ── Callouts ── */
+  .callout {
+    display: flex;
+    gap: 12px;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 0.85rem;
+    border: 1px solid;
+  }
+  .callout-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-body p { margin: 0; }
+  .callout-body p + p { margin-top: 6px; }
+  .callout.warn   { background: rgba(247,201,72,0.08); border-color: rgba(247,201,72,0.3); }
+  .callout.info   { background: rgba(92,143,255,0.08); border-color: rgba(92,143,255,0.3); }
+  .callout.danger { background: rgba(255,94,94,0.08);  border-color: rgba(255,94,94,0.3); }
+  .callout.tip    { background: rgba(56,217,169,0.08); border-color: rgba(56,217,169,0.3); }
+
+  /* ── Collapsible ── */
+  details {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+  summary {
+    padding: 12px 18px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  summary::before { content: "▶"; font-size: 0.65rem; color: var(--text-dim); transition: transform 0.2s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  details .details-body { padding: 0 18px 18px; }
+
+  /* ── Entity grid ── */
+  .entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 12px 0 24px; }
+  .entity-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .entity-card .domain { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 4px; }
+  .entity-card .name   { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+  .entity-card .desc   { font-size: 0.76rem; color: var(--text-dim); margin-top: 4px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    nav { display: none; }
+    main { padding: 24px 20px; }
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════ -->
+<nav id="sidebar">
+  <div class="nav-logo">
+    <h1>Tuya HA Suite</h1>
+    <p>Home Assistant Integration Docs</p>
+  </div>
+  <div class="nav-links">
+    <div class="nav-group">Getting Started</div>
+    <a href="#overview"       class="nav-link">Overview</a>
+    <a href="#architecture"   class="nav-link">Architecture</a>
+    <a href="#prerequisites"  class="nav-link">Prerequisites</a>
+    <a href="#installation"   class="nav-link">Installation</a>
+
+    <div class="nav-group">Integrations</div>
+    <a href="#home-core"      class="nav-link">Tuya Home Core</a>
+    <a href="#watering"       class="nav-link">Tuya Watering</a>
+    <a href="#cameras"        class="nav-link">Tuya Cameras</a>
+
+    <div class="nav-group">Reference</div>
+    <a href="#entities"       class="nav-link">Entities</a>
+    <a href="#options"        class="nav-link">Options &amp; Settings</a>
+    <a href="#technical"      class="nav-link">Technical Reference</a>
+    <a href="#quota"          class="nav-link">API Quota</a>
+    <a href="#extending"      class="nav-link">Extending</a>
+  </div>
+  <div class="nav-bottom">
+    <button class="theme-toggle" onclick="toggleTheme()">☀ Light / ☾ Dark</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════ MAIN ═══════════════════════════════ -->
+<main>
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <h2>Tuya HA Suite</h2>
+    <p>Three HACS integrations for Home Assistant that share a single Tuya Cloud connection to control watering valves and monitor IP cameras — with real-time motion alerts and SD card health tracking.</p>
+    <div class="badges">
+      <span class="badge badge-blue">Tuya Home Core v0.2.0</span>
+      <span class="badge badge-green">Tuya Watering v0.1.0</span>
+      <span class="badge badge-orange">Tuya Cameras v0.2.0</span>
+      <span class="badge badge-gray">HA ≥ 2024.6</span>
+      <span class="badge badge-gray">HACS required</span>
+    </div>
+  </div>
+
+  <!-- ══════════════ OVERVIEW ══════════════ -->
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>The suite is split into three focused integrations. <strong>Tuya Home Core</strong> authenticates once with the Tuya Cloud API and shares the connection, device list, and area map across all companions. The companion integrations declare it as a dependency and never need their own credentials.</p>
+
+    <div class="cards">
+      <div class="card core">
+        <div class="card-icon">🔑</div>
+        <h3>Tuya Home Core</h3>
+        <p>Shared Tuya Cloud credentials, device discovery, and area mapping. Required by both companions.</p>
+        <div class="card-meta">
+          <span class="badge badge-blue">cloud_polling</span>
+          <span class="badge badge-gray">v0.2.0</span>
+        </div>
+      </div>
+      <div class="card water">
+        <div class="card-icon">💧</div>
+        <h3>Tuya Watering</h3>
+        <p>Local-first control of Tuya Zigbee water valves via tinytuya. Supports multiple valves per gateway, configurable DPS codes.</p>
+        <div class="card-meta">
+          <span class="badge badge-green">local_push</span>
+          <span class="badge badge-gray">v0.1.0</span>
+        </div>
+      </div>
+      <div class="card camera">
+        <div class="card-icon">📷</div>
+        <h3>Tuya Cameras</h3>
+        <p>SD card monitoring, real-time MQTT motion alerts with email notifications per area, and manual SD format triggers.</p>
+        <div class="card-meta">
+          <span class="badge badge-orange">cloud_push</span>
+          <span class="badge badge-gray">v0.2.0</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ ARCHITECTURE ══════════════ -->
+  <section id="architecture">
+    <h2>Architecture</h2>
+    <p>All three integrations run inside the Home Assistant process. There are no external servers, no helper scripts, and no systemd services required.</p>
+
+    <div class="arch">
+<span class="hl-gray">┌───────────────────────────────────────────────────────┐</span>
+<span class="hl-gray">│                  Home Assistant Process                │</span>
+<span class="hl-gray">│                                                       │</span>
+<span class="hl-gray">│  ┌──────────────────────────────────────────────┐    │</span>
+<span class="hl-blue">│  │          tuya_home_core                      │    │</span>
+<span class="hl-blue">│  │  TuyaHomeAPI  ←→  Tuya Cloud REST API        │    │</span>
+<span class="hl-blue">│  │  TuyaHomeCoreCoordinator  (refresh: N days)  │    │</span>
+<span class="hl-blue">│  │    └─ device list + area map (shared)        │    │</span>
+<span class="hl-gray">│  └──────────────┬───────────────────────────────┘    │</span>
+<span class="hl-gray">│                 │  hass.data["tuya_home_core"]        │</span>
+<span class="hl-gray">│         ┌───────┴────────┐                           │</span>
+<span class="hl-green">│  ┌──────▼──────┐  ┌──────▼───────────────────────┐  │</span>
+<span class="hl-green">│  │tuya_watering│  │      tuya_cameras             │  │</span>
+<span class="hl-green">│  │  tinytuya   │  │  CameraCoordinator            │  │</span>
+<span class="hl-green">│  │  local UDP  │  │    └─ SD status poll          │  │</span>
+<span class="hl-green">│  │  switch.*   │  │  TuyaMQTTBridge               │  │</span>
+<span class="hl-orange">│  │             │  │    └─ AES-ECB motion events   │  │</span>
+<span class="hl-orange">│  │             │  │  Notifier (SMTP email)        │  │</span>
+<span class="hl-green">│  └─────────────┘  └──────────────────────────────┘  │</span>
+<span class="hl-gray">│                                                       │</span>
+<span class="hl-gray">└───────────────────────────────────────────────────────┘</span>
+    </div>
+
+    <h3>Data flow</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td>1. HA start</td><td><code>tuya_home_core</code> loads first (it's a declared dependency). Authenticates with Tuya Cloud, fetches device list and area map, stores them in <code>hass.data["tuya_home_core"]</code>.</td></tr>
+          <tr><td>2. Companion load</td><td><code>tuya_watering</code> and <code>tuya_cameras</code> read the shared API client and coordinator from <code>hass.data</code> — no extra credentials needed.</td></tr>
+          <tr><td>3. Scheduled refresh</td><td>Each coordinator refreshes its data on a user-configurable interval (default 14 days). Manual refresh available via button entity.</td></tr>
+          <tr><td>4. Motion events</td><td><code>tuya_cameras</code> MQTT bridge subscribes to Tuya's EU message queue. Motion DPS codes trigger email notifications to the configured area recipients.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════ PREREQUISITES ══════════════ -->
+  <section id="prerequisites">
+    <h2>Prerequisites</h2>
+
+    <h3>Tuya Developer Account</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Create a Tuya IoT project</h4>
+          <p>Go to <a href="https://iot.tuya.com" target="_blank" style="color:var(--accent)">iot.tuya.com</a>, create a project, and link your SmartLife app account. Choose the <strong>Smart Home</strong> industry.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Note your credentials</h4>
+          <p>From the project overview page, copy your <strong>Access ID</strong> (API Key) and <strong>Access Secret</strong>. These are entered once into Tuya Home Core.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Enable required APIs</h4>
+          <p>In the project's <em>API Products</em> tab, ensure <strong>IoT Core</strong>, <strong>Device Status Notification</strong>, and <strong>Smart Home Basic Service</strong> are subscribed.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Link SmartLife devices</h4>
+          <p>Your cameras and valves must be added to SmartLife homes. The integration reads home and area assignments directly from the Tuya Cloud API.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Email (Cameras only)</h3>
+    <p>Motion and SD card alerts are sent via SMTP. Gmail works well — create an <strong>App Password</strong> (not your account password) under <em>Google Account → Security → 2-Step Verification → App passwords</em>.</p>
+
+    <h3>Local network (Watering only)</h3>
+    <p>Tuya Zigbee valves are controlled locally via tinytuya UDP. The HA host must be on the same network as the Zigbee gateway. You will need the gateway's local IP, local key, and the sub-device's CID — all obtainable from the Tuya IoT platform device list or via tinytuya's scan tool.</p>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <p><strong>Never call <code>gw.status()</code> on a Tuya Zigbee gateway device.</strong> This returns a <code>device22</code> error, hangs the socket, and wastes API quota. Only call <code>.status()</code> on sub-devices.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ INSTALLATION ══════════════ -->
+  <section id="installation">
+    <h2>Installation</h2>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <p>Install <strong>Tuya Home Core first</strong>. The companion integrations declare it as a dependency and will fail to load if it isn't present.</p>
+      </div>
+    </div>
+
+    <h3>Via HACS (recommended)</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Add the repositories</h4>
+          <p>In HACS → Integrations → ⋮ → Custom repositories, add each URL with category <em>Integration</em>:</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">URLs</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>https://github.com/a000a999a/ha-tuya-home-core
+https://github.com/a000a999a/ha-tuya-watering
+https://github.com/a000a999a/ha-tuya-cameras</pre>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Download the integrations</h4>
+          <p>Search for <em>Tuya Home Core</em>, <em>Tuya Watering</em>, and <em>Tuya Cameras</em> in HACS and click Download on each.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Restart Home Assistant</h4>
+          <p>After downloading, restart HA so the custom components are loaded.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Add the integrations</h4>
+          <p>Go to <em>Settings → Devices &amp; Services → Add Integration</em>. Add <strong>Tuya Home Core</strong> first, then the companions.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Manual installation</h3>
+    <p>Copy the <code>custom_components/tuya_home_core</code> (and companion) directories into your HA <code>config/custom_components/</code> folder and restart.</p>
+  </section>
+
+  <!-- ══════════════ HOME CORE ══════════════ -->
+  <section id="home-core">
+    <h2>Tuya Home Core</h2>
+    <p>The credential hub. Configure once — all companion integrations inherit the connection automatically.</p>
+
+    <h3>Initial setup</h3>
+    <p>The config flow asks for four values:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Where to find it</th><th>Example format</th></tr></thead>
+        <tbody>
+          <tr><td><strong>API Key</strong> (Access ID)</td><td>Tuya IoT project → Overview</td><td><code class="tok-redact">your-access-id</code></td></tr>
+          <tr><td><strong>API Secret</strong></td><td>Tuya IoT project → Overview</td><td><code class="tok-redact">your-access-secret</code></td></tr>
+          <tr><td><strong>Region</strong></strong></td><td>Where your SmartLife account was created</td><td><code>eu</code> / <code>us</code> / <code>cn</code> / <code>in</code></td></tr>
+          <tr><td><strong>UID</strong></td><td>Auto-detected; shown after first save. Find manually in Tuya IoT → Devices → Device details.</td><td><code class="tok-redact">your-tuya-uid</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <p>The <strong>UID</strong> field is required for the MQTT motion alert bridge in Tuya Cameras. If left blank at first setup, save and reconfigure — the integration auto-detects it from the Tuya device list on the first successful refresh.</p>
+      </div>
+    </div>
+
+    <h3>What it creates</h3>
+    <div class="entity-grid">
+      <div class="entity-card">
+        <div class="domain">button</div>
+        <div class="name">Refresh Devices</div>
+        <div class="desc">Triggers an immediate pull of the device list and area map from Tuya Cloud.</div>
+      </div>
+    </div>
+
+    <h3>Entities reference</h3>
+    <p>One button entity per config entry. The entity unique ID is <code>{entry_id}_refresh_devices</code>.</p>
+
+    <h3>Coordinator data layout</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="tok-comment"># hass.data["tuya_home_core"][entry_id]["coordinator"].data</span>
+{
+    <span class="tok-str">"devices"</span>: [
+        {<span class="tok-str">"id"</span>: <span class="tok-str">"device-id"</span>, <span class="tok-str">"name"</span>: <span class="tok-str">"Camera name"</span>, <span class="tok-str">"category"</span>: <span class="tok-str">"ipc"</span>, ...},
+        ...
+    ],
+    <span class="tok-str">"areas"</span>: {
+        <span class="tok-str">"device-id"</span>: <span class="tok-str">"Living Room"</span>,
+        ...
+    }
+}</pre>
+    </div>
+  </section>
+
+  <!-- ══════════════ WATERING ══════════════ -->
+  <section id="watering">
+    <h2>Tuya Watering</h2>
+    <p>Local-first valve control with zero cloud dependency during watering — commands go directly to the Zigbee gateway over your LAN via tinytuya.</p>
+
+    <h3>One entry per valve group</h3>
+    <p>Create one config entry for each Zigbee gateway. Each entry can manage multiple sub-device valves. The entry name becomes the group label (e.g. <em>Terrasse</em>, <em>Keller</em>).</p>
+
+    <h3>Adding valves</h3>
+    <p>After creating the entry, go to <em>Configure</em> → <em>Add valve</em>. Fill in the valve details:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td><code>name</code></td><td>Display name for the switch entity</td><td>—</td></tr>
+          <tr><td><code>device_id</code></td><td>Tuya sub-device ID</td><td>—</td></tr>
+          <tr><td><code>gateway_id</code></td><td>Tuya gateway device ID</td><td>—</td></tr>
+          <tr><td><code>gateway_ip</code></td><td>Local IP of the Zigbee gateway</td><td>—</td></tr>
+          <tr><td><code>gateway_key</code></td><td>tinytuya local key (32 hex chars)</td><td>—</td></tr>
+          <tr><td><code>sub_cid</code></td><td>Sub-device CID (Zigbee node identifier)</td><td>—</td></tr>
+          <tr><td><code>default_duration</code></td><td>Watering duration in seconds</td><td>120</td></tr>
+          <tr><td><code>dps_duration</code></td><td>DPS code for timer duration</td><td>104</td></tr>
+          <tr><td><code>dps_trigger</code></td><td>DPS code to start watering</td><td>116</td></tr>
+          <tr><td><code>dps_stop</code></td><td>DPS code for manual stop</td><td>1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <p>The DPS defaults (104 / 116 / 1) match the <strong>GIEX GX-02BT</strong> valve. Other Tuya valves may use different codes — check your device's DPS map on the Tuya IoT platform.</p>
+      </div>
+    </div>
+
+    <h3>How watering works</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Sequence (tinytuya local)</span></div>
+      <pre><span class="tok-comment"># 1. Set timer duration via DPS 104</span>
+sub.set_value(<span class="tok-num">104</span>, duration_seconds)
+<span class="tok-comment"># 2. Wait 0.5s between DPS commands</span>
+<span class="tok-comment"># 3. Trigger watering via DPS 116</span>
+sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>)
+<span class="tok-comment"># Valve closes automatically after duration expires</span></pre>
+    </div>
+
+    <h3>What it creates</h3>
+    <div class="entity-grid">
+      <div class="entity-card">
+        <div class="domain">switch</div>
+        <div class="name">{Valve name}</div>
+        <div class="desc">One switch per configured valve. Turning on starts watering for the configured duration.</div>
+      </div>
+    </div>
+
+    <h3>Safety notes</h3>
+    <div class="callout danger">
+      <span class="callout-icon">🚫</span>
+      <div class="callout-body">
+        <p>Always set <code>socketTimeout(8)</code> before any tinytuya command. Without it, an unreachable gateway hangs the HA event loop indefinitely.</p>
+        <p>Do not call <code>gw.status()</code> on the gateway object. Call <code>.status()</code> on the sub-device only.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ CAMERAS ══════════════ -->
+  <section id="cameras">
+    <h2>Tuya Cameras</h2>
+    <p>SD card monitoring, real-time motion alerts via Tuya MQTT, and per-area email notification routing — all without AI or external services.</p>
+
+    <h3>Setup wizard — three phases</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Select Tuya account</h4>
+          <p>If you have a single Tuya Home Core entry it is selected automatically.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>SMTP / email settings</h4>
+          <p>Enter your SMTP host, port, sender address, and App Password. Gmail: <code>smtp.gmail.com:587</code>, use an App Password, not your login password.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Per-area recipients</h4>
+          <p>For each area that has cameras, enter semicolon-separated recipient addresses for <em>human alerts</em> (motion) and <em>tech alerts</em> (SD card, camera offline). Leave blank to disable alerts for that area.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Motion alert pipeline</h3>
+    <p>Real-time motion events arrive via the Tuya MQTT message queue (no polling). The bridge decrypts each message and fires an email.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Event flow</span></div>
+      <pre>Tuya Camera
+  └─→ MQTT broker (ssl://m1.tuyaeu.com:8883)
+        └─→ TuyaMQTTBridge  (HA async task)
+              ├─ decrypt: AES-128-ECB, key = mqtt_password[8:24]
+              ├─ parse: DPS code movement_detect_pic / initiative_message
+              ├─ lookup: device → area → recipients
+              └─→ Notifier.send_alert()  (SMTP)</pre>
+    </div>
+
+    <h3>SD card monitoring</h3>
+    <p>On each scheduled refresh (default every 14 days, or on manual button press), the coordinator polls each camera's SD card status via the Tuya Cloud API and creates sensor entities. An alert email is sent when usage exceeds the configured threshold (default 90%).</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>SD status code</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>1</code></td><td>Normal</td></tr>
+          <tr><td><code>2</code></td><td>Needs format</td></tr>
+          <tr><td><code>3</code></td><td>Formatting in progress</td></tr>
+          <tr><td><code>4</code></td><td>Format failed</td></tr>
+          <tr><td><code>5</code></td><td>No card inserted</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>What it creates</h3>
+    <div class="entity-grid">
+      <div class="entity-card">
+        <div class="domain">button</div>
+        <div class="name">Refresh</div>
+        <div class="desc">Refreshes the device list (via Home Core) then updates SD status for all cameras. Sequential.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">button</div>
+        <div class="name">Format SD Card</div>
+        <div class="desc">One per camera. Triggers an SD format on that specific device via Tuya Cloud API.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">sensor</div>
+        <div class="name">SD Used %</div>
+        <div class="desc">SD card usage percentage. Updated on each refresh.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">sensor</div>
+        <div class="name">SD Status</div>
+        <div class="desc">SD card status label (normal / needs format / no card / …).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ ENTITIES ══════════════ -->
+  <section id="entities">
+    <h2>Entities Reference</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Entity</th><th>Domain</th><th>Integration</th><th>Unique ID pattern</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Refresh Devices</td><td><code>button</code></td><td>tuya_home_core</td>
+            <td><code>{entry_id}_refresh_devices</code></td>
+          </tr>
+          <tr>
+            <td>Refresh</td><td><code>button</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_refresh</code></td>
+          </tr>
+          <tr>
+            <td>Format SD Card</td><td><code>button</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_{device_id}_format_sd</code></td>
+          </tr>
+          <tr>
+            <td>SD Used %</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_{device_id}_sd_pct</code></td>
+          </tr>
+          <tr>
+            <td>SD Free (GB)</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_{device_id}_sd_free_gb</code></td>
+          </tr>
+          <tr>
+            <td>SD Total (GB)</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_{device_id}_sd_total_gb</code></td>
+          </tr>
+          <tr>
+            <td>SD Status</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_{device_id}_sd_status</code></td>
+          </tr>
+          <tr>
+            <td>{Valve name}</td><td><code>switch</code></td><td>tuya_watering</td>
+            <td><code>{entry_id}_{device_id}</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <p>All unique IDs are built from the config entry ID (a stable ULID assigned by HA at creation time) plus the Tuya device ID. Neither changes when devices are renamed or IPs change.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ OPTIONS ══════════════ -->
+  <section id="options">
+    <h2>Options &amp; Settings</h2>
+    <p>All user-facing settings are accessible via <em>Settings → Devices &amp; Services → [integration] → Configure</em>.</p>
+
+    <h3>Tuya Home Core</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Setting</th><th>Description</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td>API credentials</td><td>API Key, Secret, Region, UID — editable at any time.</td><td>—</td></tr>
+          <tr><td>Auto-refresh interval</td><td>How often the device list is pulled from Tuya Cloud (slider, 1–30 days).</td><td>14 days</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Tuya Cameras</h3>
+    <p>A three-option menu is presented:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Menu item</th><th>What you can change</th></tr></thead>
+        <tbody>
+          <tr><td>Update SMTP / email settings</td><td>SMTP host, port, sender address, App Password.</td></tr>
+          <tr><td>Edit area recipients</td><td>Select an area and update Human / Tech email recipients (semicolon-separated).</td></tr>
+          <tr><td>Refresh interval &amp; SD alert threshold</td><td>Auto-refresh slider (1–30 days) and SD usage threshold slider (50–99%).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Tuya Watering</h3>
+    <p>A two-option menu:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Menu item</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Add valve</td><td>Add a new valve sub-device to this gateway entry.</td></tr>
+          <tr><td>Remove valve</td><td>Select and remove an existing valve.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════ TECHNICAL ══════════════ -->
+  <section id="technical">
+    <h2>Technical Reference</h2>
+
+    <details>
+      <summary>MQTT bridge — connection and decryption</summary>
+      <div class="details-body">
+        <p>The <code>TuyaMQTTBridge</code> uses <strong>paho-mqtt</strong> over TLS to subscribe to Tuya's EU message queue. Credentials are fetched once at startup and refreshed automatically before expiry.</p>
+
+        <h4>MQTT credentials endpoint</h4>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">HTTP</span></div>
+          <pre>POST /v1.0/open-hub/access/config
+Body: {
+  <span class="tok-str">"uid"</span>:       <span class="tok-redact">"&lt;YOUR_TUYA_UID&gt;"</span>,
+  <span class="tok-str">"link_id"</span>:   <span class="tok-redact">"&lt;YOUR_ACCESS_ID&gt;"</span>,
+  <span class="tok-str">"link_type"</span>: <span class="tok-str">"mqtt"</span>,
+  <span class="tok-str">"topics"</span>:    <span class="tok-str">"device"</span>
+}</pre>
+        </div>
+
+        <h4>Broker</h4>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Config</span></div>
+          <pre>url:      ssl://m1.tuyaeu.com:8883
+topic:    cloud/token/in/{session_id}
+expiry:   7200 seconds  →  reconnect at T-10 min</pre>
+        </div>
+
+        <h4>Message decryption</h4>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python</span></div>
+          <pre><span class="tok-kw">from</span> cryptography.hazmat.primitives.ciphers <span class="tok-kw">import</span> Cipher, algorithms, modes
+<span class="tok-comment"># Key = bytes 8–23 of the MQTT session password (changes every session)</span>
+key  = mqtt_password[<span class="tok-num">8</span>:<span class="tok-num">24</span>].encode()
+<span class="tok-comment"># Cipher: AES-128-ECB with PKCS7 padding</span>
+cipher = Cipher(algorithms.AES(key), modes.ECB())</pre>
+        </div>
+
+        <h4>Motion DPS codes</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>Value encoding</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><code>movement_detect_pic</code></td><td>Raw JSON string</td><td>Motion with image (bucket + path)</td></tr>
+              <tr><td><code>initiative_message</code></td><td>Base64 → JSON</td><td>Motion event (camera model dependent)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Coordinator pattern — shared device data</summary>
+      <div class="details-body">
+        <p>All three integrations use HA's <code>DataUpdateCoordinator</code>. The core coordinator fetches the device list; companions read from it without extra API calls.</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python</span></div>
+          <pre><span class="tok-comment"># Cameras coordinator reads core data — no extra API call for device list</span>
+<span class="tok-kw">async def</span> _async_update_data(self):
+    core_data = self._core_coordinator.data <span class="tok-kw">or</span> {}
+    devices   = core_data.get(<span class="tok-str">"devices"</span>, [])
+    area_map  = core_data.get(<span class="tok-str">"areas"</span>, {})
+    cameras   = self._camera_api.cameras_from_devices(devices, area_map)
+    <span class="tok-comment"># Only the SD status poll hits the cloud (one call per camera)</span>
+    <span class="tok-kw">for</span> cam <span class="tok-kw">in</span> cameras:
+        sd = self._camera_api.get_sd_status(cam[<span class="tok-str">"id"</span>])
+        ...</pre>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>tinytuya local control — valve command sequence</summary>
+      <div class="details-body">
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python</span></div>
+          <pre>sub = tinytuya.OutletDevice(
+    dev_id  = device_id,
+    address = gateway_ip,
+    local_key = gateway_key,
+    version = <span class="tok-str">"3.4"</span>,
+    cid     = sub_cid,
+    gateway_id = gateway_id,
+)
+sub.set_socketTimeout(<span class="tok-num">8</span>)      <span class="tok-comment"># REQUIRED — prevents event loop hang</span>
+sub.set_socketPersistent(<span class="tok-kw">True</span>) <span class="tok-comment"># Keep socket open for multi-DPS sequence</span>
+sub.set_value(<span class="tok-num">104</span>, duration)   <span class="tok-comment"># Set timer (seconds)</span>
+time.sleep(<span class="tok-num">0.5</span>)
+sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>)       <span class="tok-comment"># Trigger open</span></pre>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Config entry structure — what's stored where</summary>
+      <div class="details-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Integration</th><th>entry.data</th><th>entry.options</th></tr></thead>
+            <tbody>
+              <tr><td>tuya_home_core</td><td>api_key, api_secret, region, uid</td><td>refresh_days</td></tr>
+              <tr><td>tuya_watering</td><td>core_entry_id</td><td>valves (list of valve dicts)</td></tr>
+              <tr><td>tuya_cameras</td><td>core_entry_id, smtp_host, smtp_port, smtp_sender, smtp_password</td><td>recipients (per-area dict), refresh_days, sd_alert_threshold</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Sensitive values (API secret, SMTP password) are stored in <code>entry.data</code> which HA encrypts at rest in its <code>.storage/</code> directory.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ══════════════ QUOTA ══════════════ -->
+  <section id="quota">
+    <h2>API Quota</h2>
+    <p>Tuya's <strong>Trial Edition</strong> (free tier) provides a limited monthly quota of API calls. This suite is specifically designed to stay well within it.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Operation</th><th>Calls/month (default)</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Device list refresh</td><td>~2–4</td><td>Scheduled every 14 days + occasional manual presses</td></tr>
+          <tr><td>SD status poll</td><td>~2 × N cameras</td><td>Once per refresh cycle, one call per camera</td></tr>
+          <tr><td>MQTT credentials</td><td>~12–20</td><td>One call per session; refreshed every ~2 hours</td></tr>
+          <tr><td>SD format (manual)</td><td>On demand</td><td>Only when explicitly triggered by user</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <p>Tuya Trial Edition quotas reset on the <strong>first day of each calendar month</strong>. If the quota is exhausted (HTTP 29002002 error), the coordinator falls back to its last cached data and logs a warning. No data is lost.</p>
+        <p>To stay within Trial limits: keep the auto-refresh interval at 7 days or more, and use the manual Refresh button only when actually needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ EXTENDING ══════════════ -->
+  <section id="extending">
+    <h2>Extending</h2>
+
+    <h3>AI / YOLO motion detection</h3>
+    <p>The MQTT bridge calls <code>Notifier.send_alert()</code> on every motion event. To add AI filtering (e.g. human detection with YOLOv8), intercept between the MQTT message and the notifier call:</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Python sketch</span></div>
+      <pre><span class="tok-comment"># In mqtt_bridge.py — extend _handle_motion_event():</span>
+image_bytes = await self._fetch_motion_image(event)
+<span class="tok-kw">if</span> image_bytes:
+    label, conf = yolo_model.predict(image_bytes)
+    <span class="tok-kw">if</span> label != <span class="tok-str">"person"</span> <span class="tok-kw">or</span> conf < <span class="tok-num">0.6</span>:
+        <span class="tok-kw">return</span>  <span class="tok-comment"># suppress non-human alerts</span>
+<span class="tok-kw">await</span> self._notifier.send_alert(...)</pre>
+    </div>
+    <p>YOLOv8 nano (<code>ultralytics</code> package) runs comfortably on a CPU-only HA host for single-frame inference at ~100–300ms per image.</p>
+
+    <h3>Additional sensor types</h3>
+    <p>The <code>CameraCoordinator</code> data dict already contains <code>online</code> (bool), <code>sd_status</code> (str), and all SD metrics. Adding a new sensor is a matter of subclassing <code>SensorEntity</code> in <code>sensor.py</code> and pointing it at the existing coordinator data key.</p>
+
+    <h3>Notification channels</h3>
+    <p>The <code>Notifier</code> class in <code>notify.py</code> is the single output point. Swap the SMTP backend for Telegram, Pushover, or any other channel by implementing the same <code>send_alert(subject, body, area)</code> interface.</p>
+
+    <h3>Camera dashboard</h3>
+    <p>The SD sensor entities are standard HA sensors — they work out of the box with any Lovelace card. A grid of gauge cards showing SD usage per camera, grouped by area, can be built with no custom code.</p>
+  </section>
+
+</main>
+
+<script>
+  // ── Theme toggle ──
+  function toggleTheme() {
+    const root = document.documentElement;
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', root.dataset.theme);
+  }
+  (function() {
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  })();
+
+  // ── Active nav link on scroll ──
+  const sections = document.querySelectorAll('section[id], div[id]');
+  const links    = document.querySelectorAll('.nav-link');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  // ── Copy code ──
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+</script>
+</body>
+</html>
