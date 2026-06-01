@@ -989,12 +989,12 @@ Response fields:
   expire_time   — 7200 seconds</pre>
         </div>
 
-        <h4>AES-GCM (platform UI) vs AES-ECB (MQTT wire) — important distinction</h4>
-        <div class="callout warn">
-          <span class="callout-icon">⚠️</span>
+        <h4>Platform UI encryption setting vs MQTT wire protocol</h4>
+        <div class="callout info">
+          <span class="callout-icon">ℹ️</span>
           <div class="callout-body">
-            <p>The Tuya Developer Platform UI shows an <strong>AES-GCM</strong> encryption setting under Message Service. This setting applies to the <em>Apache Pulsar</em> message queue delivery SDK — a separate delivery mechanism. It does <strong>not</strong> affect the MQTT broker at <code>m1.tuyaeu.com:8883</code>.</p>
-            <p>MQTT messages from Tuya are always encrypted with <strong>AES-128-ECB</strong>, key = <code>password[8:24]</code> (16 bytes), regardless of the platform UI setting. This is confirmed by Tuya's official SDKs (tinytuya, tuya-connector-python) and by the MQTT credentials API response which contains no encryption-type field.</p>
+            <p>The Tuya Developer Platform UI offers an AES-GCM encryption option under Message Service. That setting governs the <em>Apache Pulsar</em> delivery SDK — a separate transport layer. It has no effect on the MQTT broker at <code>m1.tuyaeu.com:8883</code>, which is what this integration uses.</p>
+            <p>The MQTT message layer uses <strong>AES-128-ECB</strong> with a session-specific key derived from <code>password[8:24]</code>. This is Tuya's established MQTT protocol, documented and used consistently across all Tuya open-source SDKs (tinytuya, tuya-connector-python). In practice the risk is contained: the MQTT connection runs over TLS, the session key rotates every two hours, and Tuya is the party responsible for the server-side transport choice.</p>
           </div>
         </div>
 
