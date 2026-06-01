@@ -350,6 +350,7 @@
     <a href="#options"        class="nav-link">Options &amp; Settings</a>
     <a href="#technical"      class="nav-link">Technical Reference</a>
     <a href="#quota"          class="nav-link">API Quota</a>
+    <a href="#coexistence"    class="nav-link">Official Tuya Integration</a>
     <a href="#extending"      class="nav-link">Extending</a>
   </div>
   <div class="nav-bottom">
@@ -993,6 +994,127 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
       <div class="callout-body">
         <p>Tuya Trial Edition quotas reset on the <strong>first day of each calendar month</strong>. If the quota is exhausted (HTTP 29002002 error), the coordinator falls back to its last cached data and logs a warning. No data is lost.</p>
         <p>To stay within Trial limits: keep the auto-refresh interval at 7 days or more, and use the manual Refresh button only when actually needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ COEXISTENCE ══════════════ -->
+  <section id="coexistence">
+    <h2>Coexistence with the Official Tuya Integration</h2>
+    <p>Home Assistant ships with an official <strong>Tuya</strong> integration (domain <code>tuya</code>) that connects directly to your SmartLife account via Tuya's cloud API. This suite and the official integration can run side-by-side — they serve different purposes and do not conflict.</p>
+
+    <h3>What the official integration provides</h3>
+    <p>The official <code>tuya</code> integration gives HA a broad, auto-discovered view of every device in your SmartLife account:</p>
+    <div class="entity-grid">
+      <div class="entity-card">
+        <div class="domain">camera</div>
+        <div class="name">Live streams</div>
+        <div class="desc">RTSP/HLS stream entities for IPC cameras, viewable in the HA dashboard.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">switch / valve</div>
+        <div class="name">Cloud switches</div>
+        <div class="desc">Cloud-controlled switch and valve entities for all Tuya devices — including watering valves.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">sensor</div>
+        <div class="name">Device sensors</div>
+        <div class="desc">Temperature, humidity, energy, SD card metrics auto-discovered from device DPS maps.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">event</div>
+        <div class="name">Doorbell events</div>
+        <div class="desc">Doorbell press and picture events exposed as HA event entities.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">select / number</div>
+        <div class="name">Device settings</div>
+        <div class="desc">Camera mode, recording quality, sensitivity — any DPS exposed as a Tuya data point.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">light / scene</div>
+        <div class="name">Lights &amp; scenes</div>
+        <div class="desc">All other Tuya device types auto-discovered and mapped to their HA domain.</div>
+      </div>
+    </div>
+
+    <h3>How this suite complements it</h3>
+    <p>The official integration is broad but generic — it has no knowledge of your areas, email routing, local valve control, or SD card alerting. This suite adds those layers:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Capability</th><th>Official <code>tuya</code></th><th>This suite</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Camera live streams</td>
+            <td>✅ RTSP/HLS via <code>camera.*</code> entities</td>
+            <td>❌ Not provided (use official for streams)</td>
+          </tr>
+          <tr>
+            <td>Valve control</td>
+            <td>Cloud <code>valve.*</code> entities (round-trip to Tuya servers)</td>
+            <td>Local UDP via tinytuya — faster, no quota cost, works offline</td>
+          </tr>
+          <tr>
+            <td>Motion alerts</td>
+            <td>Event entities — no email, no area routing</td>
+            <td>Real-time MQTT → per-area email with image attachment</td>
+          </tr>
+          <tr>
+            <td>SD card monitoring</td>
+            <td>Generic sensor — no threshold alerting</td>
+            <td>Threshold alert email when usage exceeds configured %</td>
+          </tr>
+          <tr>
+            <td>SD card format</td>
+            <td>❌ Not available</td>
+            <td>Per-camera Format SD button entity</td>
+          </tr>
+          <tr>
+            <td>Device discovery</td>
+            <td>Fully automatic, all device types</td>
+            <td>Camera and valve focused; reads from shared coordinator</td>
+          </tr>
+          <tr>
+            <td>API quota usage</td>
+            <td>Polls frequently (minutes); higher quota consumption</td>
+            <td>Default 14-day refresh + MQTT push; minimal quota use</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Duplicate entities — what to expect</h3>
+    <p>Watering valves appear in both integrations simultaneously:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Entity</th><th>Source</th><th>Recommended use</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>valve.watering_timer_terrasse_valve</code></td>
+            <td>Official <code>tuya</code></td>
+            <td>State monitoring only — cloud round-trip adds latency</td>
+          </tr>
+          <tr>
+            <td><code>switch.terrasse</code></td>
+            <td><code>tuya_watering</code> (this suite)</td>
+            <td>Automations and manual control — local, instant response</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <p>Use the official integration's <code>camera.*</code> entities for live stream cards on your dashboard. Use this suite's <code>switch.*</code> entities in all watering automations and scripts. Both can coexist in the same dashboard without any configuration changes.</p>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <p>The official Tuya integration and this suite use <strong>separate credentials</strong>. The official integration logs in via your SmartLife app account; this suite uses an IoT platform API key. They share no code or data at runtime.</p>
       </div>
     </div>
   </section>
