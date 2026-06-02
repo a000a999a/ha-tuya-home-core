@@ -16,6 +16,7 @@ from .api import TuyaHomeAPI
 from .const import (
     CONF_API_KEY,
     CONF_API_SECRET,
+    CONF_PROJECT_NAME,
     CONF_REFRESH_DAYS,
     CONF_REGION,
     CONF_UID,
@@ -29,6 +30,8 @@ from .const import (
 def _build_schema(defaults: dict | None = None) -> vol.Schema:
     d = defaults or {}
     return vol.Schema({
+        vol.Optional(CONF_PROJECT_NAME, default=d.get(CONF_PROJECT_NAME, "")):
+            selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)),
         vol.Required(CONF_API_KEY,    default=d.get(CONF_API_KEY, "")): str,
         vol.Required(CONF_API_SECRET, default=d.get(CONF_API_SECRET, "")):
             selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)),
@@ -39,6 +42,11 @@ def _build_schema(defaults: dict | None = None) -> vol.Schema:
                 type=selector.TextSelectorType.TEXT
             )),
     })
+
+
+def _entry_title(project_name: str, region: str) -> str:
+    label = project_name.strip()
+    return f"{label} ({region.upper()})" if label else f"Tuya ({region.upper()})"
 
 
 def _validate_and_fetch_uid(data: dict) -> tuple[bool, str]:
@@ -76,7 +84,7 @@ class TuyaHomeCoreConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 data = {**user_input, CONF_UID: uid}
                 return self.async_create_entry(
-                    title=f"Tuya ({user_input[CONF_REGION].upper()})",
+                    title=_entry_title(user_input.get(CONF_PROJECT_NAME, ""), user_input[CONF_REGION]),
                     data=data,
                 )
 
@@ -141,7 +149,8 @@ class TuyaHomeCoreOptionsFlow(OptionsFlow):
                 errors["base"] = "invalid_auth"
             else:
                 new_data = {**user_input, CONF_UID: uid}
-                self.hass.config_entries.async_update_entry(self._entry, data=new_data)
+                new_title = _entry_title(user_input.get(CONF_PROJECT_NAME, ""), user_input[CONF_REGION])
+                self.hass.config_entries.async_update_entry(self._entry, data=new_data, title=new_title)
                 return self.async_create_entry(
                     data={CONF_REFRESH_DAYS: int(user_input[CONF_REFRESH_DAYS])}
                 )

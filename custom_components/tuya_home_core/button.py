@@ -6,6 +6,7 @@ import logging
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -28,9 +29,10 @@ async def async_setup_entry(
 class RefreshDevicesButton(ButtonEntity):
     """Manually triggers a full device list + area map refresh from Tuya Cloud."""
 
-    _attr_has_entity_name = True
-    _attr_name            = "Refresh Devices"
-    _attr_icon            = "mdi:refresh"
+    _attr_has_entity_name   = True
+    _attr_name              = "Refresh Devices"
+    _attr_icon              = "mdi:refresh"
+    _attr_entity_category   = EntityCategory.DIAGNOSTIC
 
     def __init__(self, entry: ConfigEntry, coordinator: TuyaHomeCoreCoordinator) -> None:
         self._coordinator    = coordinator

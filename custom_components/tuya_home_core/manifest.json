@@ -1,7 +1,7 @@
 {
   "domain": "tuya_home_core",
   "name": "Tuya Home Core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "documentation": "https://github.com/a000a999a/ha-tuya-home-core",
   "issue_tracker": "https://github.com/a000a999a/ha-tuya-home-core/issues",
   "requirements": ["tinytuya>=1.15.0"],
