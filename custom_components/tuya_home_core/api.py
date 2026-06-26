@@ -13,10 +13,11 @@ _LOGGER = logging.getLogger(__name__)
 class TuyaHomeAPI:
     """Authenticated Tuya Cloud client with area/device helpers."""
 
-    def __init__(self, api_key: str, api_secret: str, region: str) -> None:
+    def __init__(self, api_key: str, api_secret: str, region: str, uid: str = "") -> None:
         self._api_key    = api_key
         self._api_secret = api_secret
         self._region     = region
+        self._uid        = uid
         self._client: tinytuya.Cloud | None = None
 
     # ── Client ────────────────────────────────────────────────────────────────
@@ -59,7 +60,27 @@ class TuyaHomeAPI:
     # ── Devices ───────────────────────────────────────────────────────────────
 
     def get_devices(self) -> list[dict[str, Any]]:
-        """Return all devices from Tuya Cloud. Returns [] on error."""
+        """Return all devices from Tuya Cloud. Returns [] on error.
+
+        With a stored uid, calls /v1.3/iot-03/devices directly — works with both
+        Auto Link and Custom Link projects. Falls back to tinytuya's getdevices()
+        (which uses /v1.0/iot-01/associated-users/devices and only works with Auto Link).
+        """
+        if self._uid:
+            try:
+                resp = self._get_client().cloudrequest(
+                    "/v1.3/iot-03/devices",
+                    query={"source_type": "tuyaUser", "source_id": self._uid, "page_size": "75"},
+                )
+                if resp and resp.get("success"):
+                    inner = resp.get("result", {})
+                    devices = inner.get("list") or inner.get("devices") or []
+                    if isinstance(devices, list):
+                        _LOGGER.debug("get_devices (uid path): %d devices", len(devices))
+                        return devices
+            except Exception as err:
+                _LOGGER.debug("get_devices uid-path failed: %s — falling back", err)
+
         try:
             result = self._get_client().getdevices(verbose=True)
             if isinstance(result, dict) and result.get("success"):
@@ -77,7 +98,7 @@ class TuyaHomeAPI:
         Build {device_id: area_name} from Tuya home management.
         Uses the user's Tuya home names; falls back to empty string if unavailable.
         """
-        uid = next((d.get("uid") for d in devices if d.get("uid")), None)
+        uid = next((d.get("uid") for d in devices if d.get("uid")), None) or self._uid or None
         if not uid:
             return {}
 
