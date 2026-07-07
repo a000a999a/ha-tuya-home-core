@@ -174,6 +174,7 @@
     color: var(--text-dim);
     line-height: 1.9;
     overflow-x: auto;
+    white-space: pre;
   }
   .arch .hl-blue   { color: var(--accent); }
   .arch .hl-green  { color: var(--accent2); }
@@ -344,6 +345,7 @@
     <a href="#home-core"      class="nav-link">Tuya Home Core</a>
     <a href="#watering"       class="nav-link">Tuya Watering</a>
     <a href="#cameras"        class="nav-link">Tuya Cameras</a>
+    <a href="#ai-detection"   class="nav-link">Tuya AI Detection</a>
 
     <div class="nav-group">Reference</div>
     <a href="#entities"       class="nav-link">Entities</a>
@@ -365,11 +367,12 @@
   <!-- ── Hero ── -->
   <div class="hero">
     <h2>Tuya HA Suite</h2>
-    <p>Three HACS integrations for Home Assistant that share a single Tuya Cloud connection to control watering valves and monitor IP cameras — with real-time motion alerts and SD card health tracking.</p>
+    <p>Four HACS integrations for Home Assistant that share a single Tuya Cloud connection to control watering valves and monitor IP cameras — with AI-gated motion alerts and SD card health tracking.</p>
     <div class="badges">
-      <span class="badge badge-blue">Tuya Home Core v0.2.0</span>
-      <span class="badge badge-green">Tuya Watering v0.1.0</span>
-      <span class="badge badge-orange">Tuya Cameras v0.2.0</span>
+      <span class="badge badge-blue">Tuya Home Core v0.3.3</span>
+      <span class="badge badge-green">Tuya Watering v0.1.5</span>
+      <span class="badge badge-orange">Tuya Cameras v0.7.4</span>
+      <span class="badge badge-gray">Tuya AI Detection v1.2.0</span>
       <span class="badge badge-gray">HA ≥ 2024.6</span>
       <span class="badge badge-gray">HACS required</span>
     </div>
@@ -378,7 +381,7 @@
   <!-- ══════════════ OVERVIEW ══════════════ -->
   <section id="overview">
     <h2>Overview</h2>
-    <p>The suite is split into three focused integrations. <strong>Tuya Home Core</strong> authenticates once with the Tuya Cloud API and shares the connection, device list, and area map across all companions. The companion integrations declare it as a dependency and never need their own credentials.</p>
+    <p>The suite is split into four focused pieces. <strong>Tuya Home Core</strong> authenticates once with the Tuya Cloud API and shares the connection, device list, and area map across all companions. The companion integrations declare it as a dependency and never need their own credentials. <strong>Tuya AI Detection</strong> is the one piece that isn't a HACS integration — it's a separate Docker service that <strong>Tuya Cameras</strong> calls over local HTTP.</p>
 
     <div class="cards">
       <div class="card core">
@@ -387,25 +390,34 @@
         <p>Shared Tuya Cloud credentials, device discovery, and area mapping. Required by both companions.</p>
         <div class="card-meta">
           <span class="badge badge-blue">cloud_polling</span>
-          <span class="badge badge-gray">v0.2.0</span>
+          <span class="badge badge-gray">v0.3.3</span>
         </div>
       </div>
       <div class="card water">
         <div class="card-icon">💧</div>
         <h3>Tuya Watering</h3>
-        <p>Local-first control of Tuya Zigbee water valves via tinytuya. Supports multiple valves per gateway, configurable DPS codes.</p>
+        <p>Local-first control of Tuya Zigbee water valves via tinytuya, with automatic Tuya Cloud fallback. Supports multiple valves per gateway, configurable DPS codes, and weather-based automation blueprints.</p>
         <div class="card-meta">
           <span class="badge badge-green">local_push</span>
-          <span class="badge badge-gray">v0.1.0</span>
+          <span class="badge badge-gray">v0.1.5</span>
         </div>
       </div>
       <div class="card camera">
         <div class="card-icon">📷</div>
         <h3>Tuya Cameras</h3>
-        <p>SD card monitoring, real-time MQTT motion alerts with email notifications per area, and manual SD format triggers.</p>
+        <p>SD card monitoring, real-time motion alerts (MQTT + SmartLife webhook), AI-gated email notifications per area (human + optional animal detection), and manual SD format triggers.</p>
         <div class="card-meta">
           <span class="badge badge-orange">cloud_push</span>
-          <span class="badge badge-gray">v0.2.0</span>
+          <span class="badge badge-gray">v0.7.4</span>
+        </div>
+      </div>
+      <div class="card core">
+        <div class="card-icon">🧠</div>
+        <h3>Tuya AI Detection</h3>
+        <p>Dockerized YOLOv8n inference service. Classifies motion images from Tuya Cameras as human/animal so alerts only fire on real subjects, not shadows or lighting changes.</p>
+        <div class="card-meta">
+          <span class="badge badge-gray">external service</span>
+          <span class="badge badge-gray">v1.2.0</span>
         </div>
       </div>
     </div>
@@ -414,7 +426,7 @@
   <!-- ══════════════ ARCHITECTURE ══════════════ -->
   <section id="architecture">
     <h2>Architecture</h2>
-    <p>All three integrations run inside the Home Assistant process. There are no external servers, no helper scripts, and no systemd services required.</p>
+    <p>The three HACS integrations run inside the Home Assistant process — no helper scripts, no systemd services required. The one exception is <strong>Tuya AI Detection</strong>: it runs as a separate Docker container, and <code>tuya_cameras</code> calls it over local HTTP for each motion image.</p>
 
     <div class="arch">
 <span class="hl-gray">┌───────────────────────────────────────────────────────┐</span>
@@ -432,12 +444,18 @@
 <span class="hl-green">│  │tuya_watering│  │      tuya_cameras             │  │</span>
 <span class="hl-green">│  │  tinytuya   │  │  CameraCoordinator            │  │</span>
 <span class="hl-green">│  │  local UDP  │  │    └─ SD status poll          │  │</span>
-<span class="hl-green">│  │  switch.*   │  │  TuyaMQTTBridge               │  │</span>
-<span class="hl-orange">│  │             │  │    └─ AES-ECB motion events   │  │</span>
-<span class="hl-orange">│  │             │  │  Notifier (SMTP email)        │  │</span>
-<span class="hl-green">│  └─────────────┘  └──────────────────────────────┘  │</span>
-<span class="hl-gray">│                                                       │</span>
-<span class="hl-gray">└───────────────────────────────────────────────────────┘</span>
+<span class="hl-green">│  │  switch.*   │  │  TuyaMQTTBridge /             │  │</span>
+<span class="hl-orange">│  │             │  │  SmartLifeWebhookBridge       │  │</span>
+<span class="hl-orange">│  │             │  │    └─ motion event + image    │──┼────┐</span>
+<span class="hl-orange">│  │             │  │  Notifier (SMTP email)        │  │    │</span>
+<span class="hl-green">│  └─────────────┘  └──────────────────────────────┘  │    │</span>
+<span class="hl-gray">│                                                       │    │</span>
+<span class="hl-gray">└───────────────────────────────────────────────────────┘    │</span>
+<span class="hl-gray">                                                               │  HTTP POST /analyze</span>
+<span class="hl-gray">                                        ┌──────────────────────▼──────────┐</span>
+<span class="hl-gray">                                        │  ai-detection (Docker, external) │</span>
+<span class="hl-gray">                                        │  YOLOv8n  →  human / animal      │</span>
+<span class="hl-gray">                                        └──────────────────────────────────┘</span>
     </div>
 
     <h3>Data flow</h3>
@@ -448,7 +466,8 @@
           <tr><td>1. HA start</td><td><code>tuya_home_core</code> loads first (it's a declared dependency). Authenticates with Tuya Cloud, fetches device list and area map, stores them in <code>hass.data["tuya_home_core"]</code>.</td></tr>
           <tr><td>2. Companion load</td><td><code>tuya_watering</code> and <code>tuya_cameras</code> read the shared API client and coordinator from <code>hass.data</code> — no extra credentials needed.</td></tr>
           <tr><td>3. Scheduled refresh</td><td>Each coordinator refreshes its data on a user-configurable interval (default 14 days). Manual refresh available via button entity.</td></tr>
-          <tr><td>4. Motion events</td><td><code>tuya_cameras</code> MQTT bridge subscribes to Tuya's EU message queue. Motion DPS codes trigger email notifications to the configured area recipients.</td></tr>
+          <tr><td>4. Motion events</td><td><code>tuya_cameras</code> receives a motion event — either from the Tuya MQTT bridge or the SmartLife webhook bridge — and obtains a JPEG (OSS download, HA snapshot, or the webhook's own image).</td></tr>
+          <tr><td>5. AI gate</td><td><code>tuya_cameras</code> POSTs the image to the AI Detection service's <code>/analyze</code> endpoint. Human detection gates the alert (fail-open on service error); animal detection, if enabled for that camera, adds an additional subject line — only a confirmed match sends an email via <code>Notifier.send_alert()</code>.</td></tr>
         </tbody>
       </table>
     </div>
@@ -619,7 +638,7 @@ https://github.com/a000a999a/ha-tuya-cameras</pre>
   <!-- ══════════════ WATERING ══════════════ -->
   <section id="watering">
     <h2>Tuya Watering</h2>
-    <p>Local-first valve control with zero cloud dependency during watering — commands go directly to the Zigbee gateway over your LAN via tinytuya.</p>
+    <p>Local-first valve control — commands go directly to the Zigbee gateway over your LAN via tinytuya when gateway fields are configured (&lt;0.5s). Leave the gateway fields blank for cloud-only mode (~1-2s via Tuya Cloud); local mode automatically falls back to cloud if the LAN command fails.</p>
 
     <h3>One entry per valve group</h3>
     <p>Create one config entry for each Zigbee gateway. Each entry can manage multiple sub-device valves. The entry name becomes the group label (e.g. <em>Terrasse</em>, <em>Keller</em>).</p>
@@ -662,12 +681,34 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
 <span class="tok-comment"># Valve closes automatically after duration expires</span></pre>
     </div>
 
+    <h3>Automation Blueprints</h3>
+    <p>Import from <em>Settings → Automations → Blueprints → Import Blueprint</em>:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Blueprint</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Weather-Based Watering</td><td>Triggers watering based on a configurable rain-probability threshold from any weather entity.</td></tr>
+          <tr><td>Manual Watering Trigger</td><td>Simple on-demand trigger for the same valve, independent of weather.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <h3>What it creates</h3>
     <div class="entity-grid">
       <div class="entity-card">
         <div class="domain">switch</div>
         <div class="name">{Valve name}</div>
         <div class="desc">One switch per configured valve. Turning on starts watering for the configured duration.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">service</div>
+        <div class="name">open_valve</div>
+        <div class="desc">Entity service — opens a specific valve, optionally overriding the configured duration.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">service</div>
+        <div class="name">close_valve</div>
+        <div class="desc">Entity service — closes a specific valve immediately.</div>
       </div>
     </div>
 
@@ -684,7 +725,7 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
   <!-- ══════════════ CAMERAS ══════════════ -->
   <section id="cameras">
     <h2>Tuya Cameras</h2>
-    <p>SD card monitoring, real-time motion alerts via Tuya MQTT, and per-area email notification routing — all without AI or external services.</p>
+    <p>SD card monitoring and per-area email notification routing for real-time motion events. Motion can arrive via two independent pipelines — the Tuya MQTT bridge, and an optional SmartLife webhook bridge for cameras with unreliable MQTT delivery. Every alert is AI-gated by the companion <a href="#ai-detection" style="color:var(--accent)">Tuya AI Detection</a> service: human detection decides whether an email fires, and optional per-camera animal detection can add extra subjects.</p>
 
     <h3>Setup wizard — three phases</h3>
     <div class="steps">
@@ -712,20 +753,42 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
     </div>
 
     <h3>Motion alert pipeline</h3>
-    <p>Real-time motion events arrive via the Tuya MQTT message queue (no polling). The bridge decrypts each message and fires an email.</p>
+    <p>Real-time motion events arrive via the Tuya MQTT message queue (no polling), or via the SmartLife webhook bridge. Either path fetches a JPEG, gates it through AI Detection, and fires an email only on a confirmed match.</p>
     <div class="code-block">
       <div class="code-header"><span class="code-lang">Event flow</span></div>
       <pre>Tuya Camera
-  └─→ MQTT broker (ssl://m1.tuyaeu.com:8883)
-        └─→ TuyaMQTTBridge  (HA async task)
-              ├─ decrypt: AES-128-ECB, key = mqtt_password[8:24]
-              ├─ parse: DPS code movement_detect_pic / initiative_message
-              ├─ lookup: device → area → recipients
-              └─→ Notifier.send_alert()  (SMTP)</pre>
+  ├─→ MQTT broker (ssl://m1.tuyaeu.com:8883)
+  │     └─→ TuyaMQTTBridge  (HA async task)
+  │           ├─ decrypt: AES-128-ECB, key = mqtt_password[8:24]
+  │           ├─ parse: DPS code movement_detect_pic / initiative_message
+  │           └─ get image: OSS download, else HA snapshot fallback
+  └─→ SmartLife app → Android bridge → /api/webhook/smartlife_motion
+        └─→ SmartLifeWebhookBridge  (HA async task, disabled by default)
+              └─ image: attached directly by the webhook POST
+
+Either path then:
+  ├─ POST image → AI Detection /analyze  (human + optional animal)
+  ├─ lookup: device → area → recipients
+  └─→ Notifier.send_alert()  (SMTP, only on confirmed detection)</pre>
     </div>
 
+    <h3>Motion alert sources</h3>
+    <p>Configure → <em>Motion alert sources</em> exposes two independent toggles per entry:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Toggle</th><th>Default</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td>Enable MQTT motion alerts</td><td>On</td><td>Disabling skips email only — AI stats and snapshots still run.</td></tr>
+          <tr><td>Enable SmartLife webhook alerts</td><td>Off</td><td>Requires the Android bridge app (SmartLifeBridge APK) installed on a tablet running SmartLife with notification access granted to it.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>AI detection</h3>
+    <p>Human detection is the base gate for every alert and fails open — if the AI Detection service is unreachable, the email still sends (with the original, un-annotated image) rather than silently dropping the event. Animal detection is opt-in per camera, configured via Configure → <em>Camera animal detection</em>: pick a camera, toggle it on, and optionally restrict to specific COCO classes (bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe — empty selection matches any). Unlike human detection, animal detection does not fail open — it requires a confirmed match to add "+ animal" to the alert.</p>
+
     <h3>SD card monitoring</h3>
-    <p>On each scheduled refresh (default every 14 days, or on manual button press), the coordinator polls each camera's SD card status via the Tuya Cloud API and creates sensor entities. An alert email is sent when usage exceeds the configured threshold (default 90%).</p>
+    <p>On each scheduled refresh (default every 14 days, or on manual button press), the coordinator polls each camera's SD card status via the Tuya Cloud API and creates sensor entities. If the Cloud API entry doesn't expose the SD field for a device, the coordinator falls back to reading it from the official Tuya integration's <code>tuya_sharing</code> device data instead. An alert email is sent when usage exceeds the configured threshold (default 90%).</p>
 
     <div class="table-wrap">
       <table>
@@ -753,14 +816,119 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
         <div class="desc">One per camera. Triggers an SD format on that specific device via Tuya Cloud API.</div>
       </div>
       <div class="entity-card">
-        <div class="domain">sensor</div>
-        <div class="name">SD Used %</div>
-        <div class="desc">SD card usage percentage. Updated on each refresh.</div>
+        <div class="domain">button</div>
+        <div class="name">Test Mailer</div>
+        <div class="desc">Sends a test email through the configured SMTP settings, without waiting for a real motion event.</div>
       </div>
       <div class="entity-card">
         <div class="domain">sensor</div>
-        <div class="name">SD Status</div>
-        <div class="desc">SD card status label (normal / needs format / no card / …).</div>
+        <div class="name">SD Card</div>
+        <div class="desc">SD usage percentage as the entity state; total/free GB and status label are exposed as attributes on the same sensor.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">sensor</div>
+        <div class="name">Online</div>
+        <div class="desc">Camera online/offline state, one per camera.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">sensor</div>
+        <div class="name">Animal Detected</div>
+        <div class="desc">Per camera, only created when animal detection is enabled for it. Shows the most recent detected class.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">sensor</div>
+        <div class="name">AI Stats</div>
+        <div class="desc">Diagnostic counters (events processed, humans detected, etc.) for the AI pipeline, one set per config entry.</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">sensor</div>
+        <div class="name">Last Human Detection</div>
+        <div class="desc">Timestamp sensor, one per area, updated whenever AI Detection confirms a human in that area.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ AI DETECTION ══════════════ -->
+  <section id="ai-detection">
+    <h2>Tuya AI Detection</h2>
+    <p>A standalone Docker Compose service — <strong>not</strong> a HACS integration, no <code>custom_components</code> install step. It receives motion images from <code>tuya_cameras</code>, runs local YOLOv8n inference, and returns a human/animal classification so alerts only fire on real subjects.</p>
+
+    <h3>Requirements</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Requirement</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Docker + Docker Compose</td><td>Runs alongside HA, not inside it</td></tr>
+          <tr><td>~2 GB disk</td><td>Python image + PyTorch + YOLOv8n model</td></tr>
+          <tr><td>~500 MB RAM at runtime</td><td>—</td></tr>
+          <tr><td>CPU-only</td><td>No GPU required — YOLOv8n runs in ~250–400 ms on a modern dual-core</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Setup</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Clone and start the service</h4>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">Shell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>git clone https://github.com/a000a999a/ha-tuya-ai-detection
+cd ha-tuya-ai-detection
+docker compose up -d</pre>
+          </div>
+          <p>The first build downloads the YOLOv8n model (~6 MB). Subsequent starts are fast.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Verify it is running</h4>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">Shell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>curl http://localhost:8000/health
+<span class="tok-comment"># {"status":"ok","model":"yolov8n"}</span></pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h4>Point Tuya Cameras at it</h4>
+          <p><em>Settings → Devices & Services → Tuya Cameras → Configure → AI Detection</em> — enable AI detection and enter the inference service URL (e.g. <code>http://localhost:8000</code>). The options flow validates <code>/health</code> before saving.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>API</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Endpoint</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET /health</code></td><td>Returns <code>{"status": "ok", "model": "yolov8n"}</code> when ready.</td></tr>
+          <tr><td><code>POST /analyze</code></td><td>Multipart form, field <code>file</code> (JPEG). Returns <code>human</code> (bool), <code>confidence</code> (float), <code>animals</code> (list of COCO class names), and <code>annotated_image_b64</code> (JPEG with bounding boxes).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Model</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Model</td><td>YOLOv8n (nano) — optimised for CPU inference</td></tr>
+          <tr><td>Human detection class</td><td>COCO class 0 (person)</td></tr>
+          <tr><td>Human confidence threshold</td><td>0.60 (hardcoded)</td></tr>
+          <tr><td>Animal detection classes</td><td>COCO classes 14–23: bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <p>Human detection fails open — a service error still sends the alert email with the original image. Animal detection does not fail open; it requires a confirmed match.</p>
       </div>
     </div>
   </section>
@@ -788,20 +956,28 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
             <td><code>{entry_id}_{device_id}_format_sd</code></td>
           </tr>
           <tr>
-            <td>SD Used %</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td>Test Mailer</td><td><code>button</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_test_mailer</code></td>
+          </tr>
+          <tr>
+            <td>SD Card</td><td><code>sensor</code></td><td>tuya_cameras</td>
             <td><code>{entry_id}_{device_id}_sd_pct</code></td>
           </tr>
           <tr>
-            <td>SD Free (GB)</td><td><code>sensor</code></td><td>tuya_cameras</td>
-            <td><code>{entry_id}_{device_id}_sd_free_gb</code></td>
+            <td>Online</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_{device_id}_online</code></td>
           </tr>
           <tr>
-            <td>SD Total (GB)</td><td><code>sensor</code></td><td>tuya_cameras</td>
-            <td><code>{entry_id}_{device_id}_sd_total_gb</code></td>
+            <td>Animal Detected</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_{device_id}_animal</code></td>
           </tr>
           <tr>
-            <td>SD Status</td><td><code>sensor</code></td><td>tuya_cameras</td>
-            <td><code>{entry_id}_{device_id}_sd_status</code></td>
+            <td>AI Stats</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_ai_{stat}</code></td>
+          </tr>
+          <tr>
+            <td>Last Human Detection</td><td><code>sensor</code></td><td>tuya_cameras</td>
+            <td><code>{entry_id}_ai_last_human_{area}</code></td>
           </tr>
           <tr>
             <td>{Valve name}</td><td><code>switch</code></td><td>tuya_watering</td>
@@ -836,7 +1012,7 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
     </div>
 
     <h3>Tuya Cameras</h3>
-    <p>A three-option menu is presented:</p>
+    <p>A multi-option menu is presented:</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Menu item</th><th>What you can change</th></tr></thead>
@@ -844,6 +1020,9 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
           <tr><td>Update SMTP / email settings</td><td>SMTP host, port, sender address, App Password.</td></tr>
           <tr><td>Edit area recipients</td><td>Select an area and update Human / Tech email recipients (semicolon-separated).</td></tr>
           <tr><td>Refresh interval &amp; SD alert threshold</td><td>Auto-refresh slider (1–30 days) and SD usage threshold slider (50–99%).</td></tr>
+          <tr><td>Motion alert sources</td><td>Toggle MQTT motion alerts (default on) and SmartLife webhook alerts (default off).</td></tr>
+          <tr><td>AI Detection</td><td>Enable/disable AI gating and set the inference service URL (validated against <code>/health</code> before saving).</td></tr>
+          <tr><td>Camera animal detection</td><td>Per camera: enable animal detection and optionally restrict to specific COCO classes.</td></tr>
         </tbody>
       </table>
     </div>
@@ -1274,18 +1453,7 @@ sub.set_value(<span class="tok-num">116</span>, <span class="tok-kw">True</span>
     <h2>Extending</h2>
 
     <h3>AI / YOLO motion detection</h3>
-    <p>The MQTT bridge calls <code>Notifier.send_alert()</code> on every motion event. To add AI filtering (e.g. human detection with YOLOv8), intercept between the MQTT message and the notifier call:</p>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">Python sketch</span></div>
-      <pre><span class="tok-comment"># In mqtt_bridge.py — extend _handle_motion_event():</span>
-image_bytes = await self._fetch_motion_image(event)
-<span class="tok-kw">if</span> image_bytes:
-    label, conf = yolo_model.predict(image_bytes)
-    <span class="tok-kw">if</span> label != <span class="tok-str">"person"</span> <span class="tok-kw">or</span> conf < <span class="tok-num">0.6</span>:
-        <span class="tok-kw">return</span>  <span class="tok-comment"># suppress non-human alerts</span>
-<span class="tok-kw">await</span> self._notifier.send_alert(...)</pre>
-    </div>
-    <p>YOLOv8 nano (<code>ultralytics</code> package) runs comfortably on a CPU-only HA host for single-frame inference at ~100–300ms per image.</p>
+    <p>This used to be a DIY exercise — intercepting <code>mqtt_bridge.py</code> before it calls <code>Notifier.send_alert()</code> and running your own YOLO model. It now ships as a real, separate service: see <a href="#ai-detection" style="color:var(--accent)">Tuya AI Detection</a> for the Docker setup, API, and per-camera animal-detection options. Both the MQTT bridge and the SmartLife webhook bridge call it automatically once configured — no code changes needed.</p>
 
     <h3>Additional sensor types</h3>
     <p>The <code>CameraCoordinator</code> data dict already contains <code>online</code> (bool), <code>sd_status</code> (str), and all SD metrics. Adding a new sensor is a matter of subclassing <code>SensorEntity</code> in <code>sensor.py</code> and pointing it at the existing coordinator data key.</p>
