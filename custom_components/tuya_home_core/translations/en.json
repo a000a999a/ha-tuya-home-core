@@ -5,20 +5,22 @@
         "title": "Connect to Tuya Cloud",
         "description": "Enter your Tuya IoT Platform credentials. Get them at https://iot.tuya.com",
         "data": {
-          "api_key":    "API Key (Access ID)",
-          "api_secret": "API Secret (Access Secret)",
-          "region":     "Data centre region",
-          "uid":        "Tuya User ID (leave blank to auto-detect)"
+          "api_key":            "API Key (Access ID)",
+          "api_secret":         "API Secret (Access Secret)",
+          "region":             "Data centre region",
+          "uid":                "Tuya User ID (leave blank to auto-detect)",
+          "tuya_hub_entry_id":  "Linked Tuya hub (SmartLife account) — required to keep this project's devices from mixing with other projects"
         }
       },
       "reauth_confirm": {
         "title": "Re-authenticate Tuya Home Core",
         "description": "Your Tuya credentials are no longer valid. Enter new credentials to re-authenticate.",
         "data": {
-          "api_key":    "API Key (Access ID)",
-          "api_secret": "API Secret (Access Secret)",
-          "region":     "Data centre region",
-          "uid":        "Tuya User ID (leave blank to auto-detect)"
+          "api_key":            "API Key (Access ID)",
+          "api_secret":         "API Secret (Access Secret)",
+          "region":             "Data centre region",
+          "uid":                "Tuya User ID (leave blank to auto-detect)",
+          "tuya_hub_entry_id":  "Linked Tuya hub (SmartLife account)"
         }
       }
     },
@@ -36,11 +38,12 @@
         "title": "Update Tuya Credentials",
         "description": "Current region: {current_region}. Current UID: {current_uid}. Re-enter credentials to update them. Leave UID blank to re-detect automatically.",
         "data": {
-          "api_key":      "API Key (Access ID)",
-          "api_secret":   "API Secret (Access Secret)",
-          "region":       "Data centre region",
-          "uid":          "Tuya User ID (leave blank to auto-detect)",
-          "refresh_days": "Auto-refresh interval (days)"
+          "api_key":            "API Key (Access ID)",
+          "api_secret":         "API Secret (Access Secret)",
+          "region":             "Data centre region",
+          "uid":                "Tuya User ID (leave blank to auto-detect)",
+          "tuya_hub_entry_id":  "Linked Tuya hub (SmartLife account) — required to keep this project's devices from mixing with other projects",
+          "refresh_days":       "Auto-refresh interval (days)"
         }
       }
     },

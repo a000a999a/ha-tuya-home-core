@@ -9,7 +9,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .api import TuyaHomeAPI
-from .const import CONF_API_KEY, CONF_API_SECRET, CONF_REGION, CONF_UID, CONF_REFRESH_DAYS, DEFAULT_REFRESH_DAYS, DOMAIN
+from .const import (
+    CONF_API_KEY,
+    CONF_API_SECRET,
+    CONF_REFRESH_DAYS,
+    CONF_REGION,
+    CONF_TUYA_HUB_ENTRY_ID,
+    CONF_UID,
+    DEFAULT_REFRESH_DAYS,
+    DOMAIN,
+)
 from .coordinator import TuyaHomeCoreCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,8 +34,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         uid=entry.data.get(CONF_UID, ""),
     )
 
-    refresh_days = entry.options.get(CONF_REFRESH_DAYS, DEFAULT_REFRESH_DAYS)
-    coordinator  = TuyaHomeCoreCoordinator(hass, api, refresh_days)
+    refresh_days  = entry.options.get(CONF_REFRESH_DAYS, DEFAULT_REFRESH_DAYS)
+    hub_entry_id  = entry.data.get(CONF_TUYA_HUB_ENTRY_ID, "")
+    coordinator   = TuyaHomeCoreCoordinator(hass, api, refresh_days, hub_entry_id)
 
     try:
         await coordinator.async_config_entry_first_refresh()
@@ -43,6 +53,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    if not hub_entry_id:
+        _LOGGER.warning(
+            "No linked Tuya hub configured for this project — sub-integrations will fall "
+            "back to an unscoped device search across ALL Tuya hubs when the Cloud device "
+            "list is unavailable, mixing in cameras/devices from other projects. Set "
+            "'Linked Tuya hub' in this integration's options to fix."
+        )
 
     _LOGGER.info(
         "Tuya Home Core loaded: %d devices across %d area(s), refresh every %d day(s)",

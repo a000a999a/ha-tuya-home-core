@@ -19,6 +19,7 @@ from .const import (
     CONF_PROJECT_NAME,
     CONF_REFRESH_DAYS,
     CONF_REGION,
+    CONF_TUYA_HUB_ENTRY_ID,
     CONF_UID,
     DEFAULT_REFRESH_DAYS,
     DEFAULT_REGION,
@@ -27,7 +28,15 @@ from .const import (
 )
 
 
-def _build_schema(defaults: dict | None = None) -> vol.Schema:
+def _hub_options(hass: HomeAssistant) -> list[selector.SelectOptionDict]:
+    """List existing official 'tuya' hub config entries — one per SmartLife account."""
+    return [
+        selector.SelectOptionDict(value=entry.entry_id, label=entry.title)
+        for entry in hass.config_entries.async_entries("tuya")
+    ]
+
+
+def _build_schema(hass: HomeAssistant, defaults: dict | None = None) -> vol.Schema:
     d = defaults or {}
     return vol.Schema({
         vol.Optional(CONF_PROJECT_NAME, default=d.get(CONF_PROJECT_NAME, "")):
@@ -40,6 +49,11 @@ def _build_schema(defaults: dict | None = None) -> vol.Schema:
         vol.Optional(CONF_UID,        default=d.get(CONF_UID, "")):
             selector.TextSelector(selector.TextSelectorConfig(
                 type=selector.TextSelectorType.TEXT
+            )),
+        vol.Optional(CONF_TUYA_HUB_ENTRY_ID, default=d.get(CONF_TUYA_HUB_ENTRY_ID, "")):
+            selector.SelectSelector(selector.SelectSelectorConfig(
+                options=_hub_options(hass),
+                mode=selector.SelectSelectorMode.DROPDOWN,
             )),
     })
 
@@ -90,7 +104,7 @@ class TuyaHomeCoreConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=_build_schema(user_input),
+            data_schema=_build_schema(self.hass, user_input),
             errors=errors,
         )
 
@@ -120,7 +134,7 @@ class TuyaHomeCoreConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=_build_schema(reauth_entry.data),
+            data_schema=_build_schema(self.hass, reauth_entry.data),
             errors=errors,
         )
 
@@ -159,7 +173,7 @@ class TuyaHomeCoreOptionsFlow(OptionsFlow):
         defaults = {**self._entry.data, CONF_REFRESH_DAYS: current_refresh}
 
         schema = vol.Schema({
-            **_build_schema(self._entry.data).schema,
+            **_build_schema(self.hass, self._entry.data).schema,
             vol.Optional(CONF_REFRESH_DAYS, default=current_refresh):
                 selector.NumberSelector(selector.NumberSelectorConfig(
                     min=1, max=30, step=1,

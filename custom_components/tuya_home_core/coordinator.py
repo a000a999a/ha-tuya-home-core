@@ -24,16 +24,20 @@ class TuyaHomeCoreCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     data layout:
       {
-        "devices":  [list of raw Tuya device dicts],
-        "areas":    {device_id: area_name},
+        "devices":       [list of raw Tuya device dicts],
+        "areas":         {device_id: area_name},
+        "hub_entry_id":  entry_id of the linked official "tuya" hub, or "" if unset,
       }
 
     Sub-integrations access this via:
       hass.data[DOMAIN][entry_id]["coordinator"]
     """
 
-    def __init__(self, hass: HomeAssistant, api: TuyaHomeAPI, refresh_days: int) -> None:
+    def __init__(
+        self, hass: HomeAssistant, api: TuyaHomeAPI, refresh_days: int, hub_entry_id: str = ""
+    ) -> None:
         self.api = api
+        self.hub_entry_id = hub_entry_id
         super().__init__(
             hass,
             _LOGGER,
@@ -53,4 +57,4 @@ class TuyaHomeCoreCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Tuya API error: {err}") from err
 
         _LOGGER.debug("Tuya coordinator refreshed: %d devices, %d areas", len(devices), len(areas))
-        return {"devices": devices, "areas": areas}
+        return {"devices": devices, "areas": areas, "hub_entry_id": self.hub_entry_id}
