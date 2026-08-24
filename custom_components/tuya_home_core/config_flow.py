@@ -166,7 +166,10 @@ class TuyaHomeCoreOptionsFlow(OptionsFlow):
                 new_title = _entry_title(user_input.get(CONF_PROJECT_NAME, ""), user_input[CONF_REGION])
                 self.hass.config_entries.async_update_entry(self._entry, data=new_data, title=new_title)
                 return self.async_create_entry(
-                    data={CONF_REFRESH_DAYS: int(user_input[CONF_REFRESH_DAYS])}
+                    data={
+                        CONF_REFRESH_DAYS: int(user_input[CONF_REFRESH_DAYS]),
+                        CONF_TUYA_HUB_ENTRY_ID: user_input.get(CONF_TUYA_HUB_ENTRY_ID, ""),
+                    }
                 )
 
         current_refresh = self._entry.options.get(CONF_REFRESH_DAYS, DEFAULT_REFRESH_DAYS)
