@@ -338,6 +338,7 @@
     <div class="nav-group">Getting Started</div>
     <a href="#overview"       class="nav-link">Overview</a>
     <a href="#architecture"   class="nav-link">Architecture</a>
+    <a href="#hardware"       class="nav-link">Compatible Hardware</a>
     <a href="#prerequisites"  class="nav-link">Prerequisites</a>
     <a href="#installation"   class="nav-link">Installation</a>
 
@@ -470,6 +471,113 @@
           <tr><td>5. AI gate</td><td><code>tuya_cameras</code> POSTs the image to the AI Detection service's <code>/analyze</code> endpoint. Human detection gates the alert (fail-open on service error); animal detection, if enabled for that camera, adds an additional subject line — only a confirmed match sends an email via <code>Notifier.send_alert()</code>.</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+
+  <!-- ══════════════ HARDWARE ══════════════ -->
+  <section id="hardware">
+    <h2>Compatible Hardware</h2>
+    <p>This suite doesn't target a specific SKU — it speaks Tuya's developer-platform protocols directly, so anything speaking the same protocol works. Below is exactly what's been running against it in production.</p>
+
+    <div class="cards">
+      <div class="card water">
+        <div class="card-icon">🌐</div>
+        <h3>Zigbee Gateway</h3>
+        <p>Tuya-compatible WiFi↔Zigbee 3.0 bridge, generic OEM. Local LAN protocol v3.4, one gateway hosts multiple valve/sensor sub-devices.</p>
+        <div class="card-meta">
+          <span class="badge badge-green">local_push</span>
+          <span class="badge badge-gray">tinytuya</span>
+        </div>
+      </div>
+      <div class="card water">
+        <div class="card-icon">💧</div>
+        <h3>GIEX GX-02BT</h3>
+        <p>Battery Zigbee irrigation timer, sub-device of the gateway above. Local control is mandatory — the cloud API can't trigger it (error 2008).</p>
+        <div class="card-meta">
+          <span class="badge badge-green">local_push</span>
+          <span class="badge badge-gray">default DPS profile</span>
+        </div>
+      </div>
+      <div class="card camera">
+        <div class="card-icon">📷</div>
+        <h3>Tuya IPC Cameras</h3>
+        <p>16 cameras across 5 form factors, 3 Tuya projects, 4 sites — fixed, panoramic, bullet, and doorbell, all on the same MQTT motion protocol.</p>
+        <div class="card-meta">
+          <span class="badge badge-orange">cloud_push</span>
+          <span class="badge badge-gray">MQTT + stream-allocate</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Zigbee gateway &amp; valve</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Device</th><th>Role</th><th>Protocol</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Tuya Zigbee gateway (generic OEM)</td>
+            <td>Hub — bridges Zigbee 3.0 sub-devices to WiFi/cloud</td>
+            <td>Local LAN v3.4 (tinytuya), local-key auth</td>
+            <td>"device22" firmware variant — see the <a href="#prerequisites" style="color:var(--accent)">gw.status() warning</a> below</td>
+          </tr>
+          <tr>
+            <td><strong>GIEX GX-02BT</strong></td>
+            <td>Zigbee valve/timer sub-device</td>
+            <td>DPS 104/116/1/108 — see <a href="#watering" style="color:var(--accent)">Tuya Watering</a></td>
+            <td>Cloud API returns error 2008 on trigger — local-only by necessity, not preference</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Cameras</h3>
+    <p>Form factors confirmed working, all speaking the same MQTT + stream-allocate protocol regardless of brand badge:</p>
+    <div class="entity-grid">
+      <div class="entity-card">
+        <div class="domain">indoor</div>
+        <div class="name">Smart Camera</div>
+        <div class="desc">Fixed indoor IPC</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">indoor / outdoor</div>
+        <div class="name">Panoramic</div>
+        <div class="desc">360° cameras</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">outdoor</div>
+        <div class="name">Bullet 2S</div>
+        <div class="desc">Outdoor bullet cameras</div>
+      </div>
+      <div class="entity-card">
+        <div class="domain">entry</div>
+        <div class="name">Intelligent Doorbell</div>
+        <div class="desc">Video doorbell</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>Confirmed scale</th></tr></thead>
+        <tbody>
+          <tr><td>Cameras in fleet</td><td>16</td></tr>
+          <tr><td>Physical sites</td><td>4</td></tr>
+          <tr><td>Tuya developer projects / SmartLife accounts</td><td>3, isolated via the <a href="#tuya-platform" style="color:var(--accent)">"Linked Tuya hub" option</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <p>None of this is brand-specific. Any Tuya Zigbee timer valve works once you configure its DPS codes (see <a href="#watering" style="color:var(--accent)">Tuya Watering</a>), and any Tuya-ecosystem IPC camera works if it emits standard <code>movement_detect_pic</code>/<code>initiative_message</code> DPS events (see <a href="#technical" style="color:var(--accent)">Technical Reference</a>).</p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <p>Cameras sending the <code>v4.0 initiative_message</code> payload format (<code>keyId: "default"</code>) can't have their inline motion thumbnail decrypted — the key isn't exposed by any Tuya Open API. This is a platform limitation, not a per-camera bug; those cameras still alert correctly via the RTSP snapshot fallback.</p>
+      </div>
     </div>
   </section>
 
