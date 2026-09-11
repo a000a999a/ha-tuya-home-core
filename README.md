@@ -86,12 +86,27 @@ From the **Overview → Home** view or **Cameras** view, press **Refresh All Cam
 | API Key | Yes | Access ID from iot.tuya.com project |
 | API Secret | Yes | Access Secret from iot.tuya.com project |
 | Region | Yes | eu / us / cn / in — must match your project's data centre |
+| Linked Tuya hub | **Yes, if you run more than one SmartLife account/hub** | The official **Tuya** integration entry (Settings → Devices & Services → Tuya) that owns this project's cameras — see below |
 
 To rename an existing entry: **Configure → fill in Project label → Save**. The title updates immediately.
 
+### Linked Tuya hub — why it matters
+
+If **Tuya Cameras** can't get a project's device list from the Cloud API (common — see
+Trial Edition / subscription expiry notes on iot.tuya.com), it falls back to scanning
+Home Assistant's own entity registry for `camera.*` entities. With no **Linked Tuya
+hub** set, that fallback scans *every* Tuya camera entity in HA, regardless of which
+SmartLife account or `tuya_home_core` project it belongs to — so a second project's
+cameras (or a third, or a fourth) can silently get pooled into the wrong project's
+camera list and dashboard. Setting **Linked Tuya hub** to the matching official
+**Tuya** hub entry scopes that fallback to only the devices under that specific hub.
+**If you have only one Tuya Home Core entry and one Tuya hub, this doesn't affect
+you** — the ambiguity only exists once there's more than one to confuse. Set it on
+every `tuya_home_core` entry once you add a second SmartLife account/project.
+
 ## Multiple Tuya projects
 
-The developer platform limits each project to **50 devices**. Add one Tuya Home Core entry per project. Each entry is fully independent with its own device list and area map.
+The developer platform limits each project to **50 devices**. Add one Tuya Home Core entry per project. Each entry is fully independent with its own device list and area map. Once you have more than one, set **Linked Tuya hub** on each (see above).
 
 ## What it does
 
