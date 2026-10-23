@@ -20,7 +20,7 @@ Tuya cameras in HA use two complementary systems. Both are needed.
 
 Using the SmartLife app on your phone:
 1. Pair each camera to your Wi-Fi
-2. Assign each camera to a **home** (e.g. "Brasil", "Wallis") — home names become area labels in HA
+2. Assign each camera to a **home** (e.g. "Main Home", "Holiday Home") — home names become area labels in HA
 3. Repeat for each SmartLife account if cameras are split across accounts
 
 ### Step 2 — Add the official Tuya hub to HA
@@ -48,7 +48,7 @@ At [iot.tuya.com](https://iot.tuya.com):
 ### Step 4 — Add Tuya Home Core in HA
 
 1. **Settings → Devices & Services → Add Integration → Tuya Home Core**
-2. Enter a **Project label** (e.g. "Main Home", "Wallis") — shown in companion integration selectors
+2. Enter a **Project label** (e.g. "Main Home", "Holiday Home") — shown in companion integration selectors
 3. Enter API Key, API Secret, Region (eu/us/cn/in)
 4. Repeat for each developer project
 
@@ -82,7 +82,7 @@ From the **Overview → Home** view or **Cameras** view, press **Refresh All Cam
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| Project label | No | Friendly name shown in companion integrations (e.g. "Main Home", "Wallis") |
+| Project label | No | Friendly name shown in companion integrations (e.g. "Main Home", "Holiday Home") |
 | API Key | Yes | Access ID from iot.tuya.com project |
 | API Secret | Yes | Access Secret from iot.tuya.com project |
 | Region | Yes | eu / us / cn / in — must match your project's data centre |

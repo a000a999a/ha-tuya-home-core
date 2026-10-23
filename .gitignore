@@ -16,3 +16,6 @@ secrets.yaml
 .venv/
 dist/
 *.egg-info/
+
+# Local Claude Code notes — never publish
+CLAUDE.md
